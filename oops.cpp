@@ -9,7 +9,7 @@ using namespace std;
 // Encapsulation: Wrapping data and methods into a single unit
 
 class Teacher {
-    // Access Modifiers: public, private, protected
+    // Access Modifiers: public, private, protected --> are used for Abstraction.
     // Data hiding: Private access modifier restricts direct access
 private:
     double salary;
@@ -125,7 +125,43 @@ public:
 
 // Polymorphism: Ability to take multiple forms
 // Compile-time/Static polymorphism: Function/Constructor overloading (Same name, different parameters)
-// Run-time/Dynamic polymorphism: Function overriding (Same name, same parameters, different implementations)
+// Run-time/Dynamic polymorphism: Function overriding (Same name, same parameters, different implementations in base and derived classes)
+// Another example is a virtual function which is defined in the base class and overridden in the derived class.
+
+
+// Abstraction: Hiding the implementation details and showing only the functionality
+// Another way of implementing abstraction is using abstract classes.
+// Abstract class is a class that acts as a blueprint for other classes, and cannot be instantiated on its own.
+// It contains atleast one virtual function.
+
+class Shape {
+public:
+    virtual void area() = 0;  // Pure virtual function
+};
+
+class Circle : public Shape {
+public:
+    double radius;
+
+    Circle(double radius) {
+        this->radius = radius;
+    }
+
+    void area() {
+        cout << "Area of circle: " << 3.14 * radius * radius << endl;
+    }
+
+};
+
+// Static Keyword
+void fun() {
+    static int x = 0;  // Intializes only once
+    x++;               // Retains the value between function calls
+    cout << x << endl;
+}
+
+// Static variables in OOPs are created only once and shared among all the objects of the class.
+// Static objects are created only once and persist throughout the program.
 
 int main() {
     // Creating objects
@@ -150,5 +186,18 @@ int main() {
     gradStudent gs1("Bob", 25, "ECE", "Signal Processing");
     TA("Uday", 30, t1.dept, t1.subject, t1.getSalary(), "Computer Networks");
 
+    Circle c1(5);
+    c1.area();
+
+    fun();
+    fun();
+    fun();
+
+    if (true){
+        Student s2(s1);
+        // The destructor of s2 will be called when it is going to exit the if scope
+        static Student s3(s2);
+        // The destructor of s3 will not be called now and only at the end of the program.
+    }
     return 0;
 }
