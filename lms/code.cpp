@@ -115,6 +115,7 @@ public:
 class Student : public User {
     public:
         Student(string name, string userID) : User(name, userID) {}
+
         ~Student(){}
 };
 class Librarian : public User {
@@ -194,6 +195,21 @@ class Librarian : public User {
             library.faculties.erase(library.facultyMap[userID]);
             library.facultyMap.erase(userID);
         }
+        void removeLibrarian(){
+            string userID;
+            cout << "Enter Librarian ID: ";
+            cin >> userID;
+            if (userID == "L0001"){
+                cout << "Cannot delete root librarian" << endl;
+                return;
+            }
+            if (userID == this->userID){
+                cout << "Cannot delete self" << endl;
+                return;
+            }
+            library.librarians.erase(library.librarianMap[userID]);
+            library.librarianMap.erase(userID);
+        }
         ~Librarian(){}
 };
 
@@ -237,6 +253,8 @@ class Book{
         string publisher;
         int year;
         string status;
+        time_t borrowedTime = 0;
+        Book(){}
         Book(string ISBN, string title, string author, string publisher, int year, string status){
             this->title = title;
             this->author = author;
@@ -256,15 +274,6 @@ class Book{
             cout << endl;
         }
         ~Book(){}
-};
-
-class borrowedBook: public Book{
-    public:
-        time_t issue_time;
-        borrowedBook(Book book, time_t t){
-            this->status = "Borrowed";
-            this->issue_time = t;
-        }
 };
 // 4. Rules
 // The system should persist its data using files. This ensures that the library’s state (e.g., user
