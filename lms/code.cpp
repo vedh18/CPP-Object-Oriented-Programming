@@ -8,6 +8,33 @@ using namespace std;
 // - The system will provide a clean and user-friendly interface to perform operations such as borrowing, returning, and viewing details of books and users. 
 // - It will also demonstrate the implementation of OOP concepts like inheritance, abstraction, and polymorphism through its class structure.
 
+class Library{
+    public:
+        set<Book> books;
+        set<Student> students;
+        set<Faculty> faculties;
+        set<Librarian> librarians;
+        map<string, Book> bookMap;
+        map<string, Student> studentMap;
+        map<string, Faculty> facultyMap;
+        map<string, Librarian> librarianMap;
+        Library(){
+
+        }
+        void viewBooks(){
+            for(auto book : books){
+                book.printBook();
+            }
+        }
+        void viewStudents(){
+            for(auto student : students){
+                student.printStudent();
+            }
+        }
+        ~Library(){}
+}; 
+
+Library library;
 class Account {
     public:
         string userID;
@@ -40,8 +67,9 @@ class Student : public User {
     public:
         Student(string name, string userID) : User(name, userID) {}
         void printStudent(){
-            cout << "Student Name: " << name << endl;
-            cout << "ID: " << userID << endl;
+            cout << left;
+            cout << setw(12) << "Student Name: " << name << endl;
+            cout << setw(12) << "ID: " << userID << endl;
         }
         ~Student(){}
 };
@@ -101,8 +129,26 @@ class Librarian : public User {
             Librarian librarian(name, userID);
             library.librarians.insert(librarian);
         }
-        void viewBooks(){
-            library.viewBooks();
+        void removeBook(){
+            string ISBN;
+            cout << "Enter Book ISBN: ";
+            cin >> ISBN;
+            library.books.erase(library.bookMap[ISBN]);
+            library.bookMap.erase(ISBN);
+        }
+        void removeStudent(){
+            string userID;
+            cout << "Enter Student ID: ";
+            cin >> userID;
+            library.students.erase(library.studentMap[userID]);
+            library.studentMap.erase(userID);
+        }
+        void removeFaculty(){
+            string userID;
+            cout << "Enter Faculty ID: ";
+            cin >> userID;
+            library.faculties.erase(library.facultyMap[userID]);
+            library.facultyMap.erase(userID);
         }
         ~Librarian(){}
 };
@@ -168,33 +214,6 @@ class Book{
         }
         ~Book(){}
 };
-class Library{
-    public:
-        set<Book> books;
-        set<Student> students;
-        set<Faculty> faculties;
-        set<Librarian> librarians;
-        map<string, Book> bookMap;
-        map<string, Student> studentMap;
-        map<string, Faculty> facultyMap;
-        map<string, Librarian> librarianMap;
-        Library(){
-
-        }
-        void viewBooks(){
-            for(auto book : books){
-                book.printBook();
-            }
-        }
-        void viewStudents(){
-            for(auto student : students){
-                student.printStudent();
-            }
-        }
-        ~Library(){}
-}; 
-
-Library library;
 
 // 4. Rules
 // The system should persist its data using files. This ensures that the library’s state (e.g., user
@@ -214,7 +233,7 @@ Library library;
 //         Upon the return of a book, its status should be updated to “Available” in the system.
 //         • Fine Calculation:
 //             ∗ For Students:
-//                 Fine = Days Overdue × 10 rupees/day.
+//                Fine = Days Overdue × 10 rupees/day. 
 //             ∗ For Faculty:
 //                 · No fine for overdue books.
 //                 · Faculty members cannot borrow additional books if they (a) Have already reached
