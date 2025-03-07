@@ -3,8 +3,6 @@ using namespace std;
 // LIBRARY MANAGEMENT SYSTEM:
 
 // - Students and Faculty: Can borrow books, return them, and view their borrowing history.
-// - Librarians: Can manage books and users.
-// - Each user and book will have unique id
 // - Users should be able to borrow and return books within specified limits
 // - Students will incur fines for overdue returns, while faculty members will have extended borrowing privileges without fines. Librarians will have the authority to add, remove, and update both books and users in the system.
 // - The system will provide a clean and user-friendly interface to perform operations such as borrowing, returning, and viewing details of books and users. 
@@ -32,7 +30,7 @@ public:
     User(string name, string userID){
         this->name = name;
         this->userID = userID;
-        account.userID = userID;
+        this->account.userID = userID;
     }
 
     ~User(){}
@@ -41,18 +39,78 @@ public:
 class Student : public User {
     public:
         Student(string name, string userID) : User(name, userID) {}
-
+        void printStudent(){
+            cout << "Student Name: " << name << endl;
+            cout << "ID: " << userID << endl;
+        }
         ~Student(){}
 };
 class Librarian : public User {
     public:
         Librarian(string name, string userID) : User(name, userID) {}
+        void addBook() {
+            string ISBN, title, author, publisher, status;
+            int year;
+            cout << "Enter Book ISBN: ";
+            cin >> ISBN;
+
+            cin.ignore(); 
+            cout << "Enter Book Title: ";
+            getline(cin, title); 
+            cout << "Enter Book Author: ";
+            getline(cin, author);  
+            cout << "Enter Book Publisher: ";
+            getline(cin, publisher);  
+            
+            cout << "Enter Book Year: ";
+            cin >> year;
+            
+            cin.ignore();
+            cout << "Enter Book Status: ";
+            getline(cin, status); 
+            Book book(ISBN, title, author, publisher, year, status);
+            library.books.insert(book);
+        }
+        void addStudent(){
+            string name, userID;
+            cin.ignore();
+            cout << "Enter Student Name: " << endl;
+            getline(cin, name);
+            cout << "Enter Student ID: " << endl;
+            cin >> userID;
+            Student student(name, userID);
+            library.students.insert(student);
+        }
+        void addFaculty(){
+            string name, userID;
+            cin.ignore();
+            cout << "Enter Faculty Name: " << endl;
+            getline(cin, name);
+            cout << "Enter Faculty ID: " << endl;
+            cin >> userID;
+            Faculty faculty(name, userID);
+            library.faculties.insert(faculty);
+        }
+        void addLibrarian(){
+            string name, userID;
+            cin.ignore();
+            cout << "Enter Librarian Name: " << endl;
+            getline(cin, name);
+            cout << "Enter Librarian ID: " << endl;
+            cin >> userID;
+            Librarian librarian(name, userID);
+            library.librarians.insert(librarian);
+        }
+        void viewBooks(){
+            library.viewBooks();
+        }
         ~Librarian(){}
 };
 
 class Faculty : public User {
     public:
         Faculty(string name, string userID) : User(name, userID) {}
+
         ~Faculty(){}
 };
 // 1. Users
@@ -61,20 +119,17 @@ class Faculty : public User {
 //         → Can borrow up to 3 books at a time.
 //         → Maximum borrowing period: 15 days.
 //         → Fines: 10 rupees per day for overdue books.
-//         → Cannot manage books or other users.
 
 //     • Faculty:
 //         → Can only view all the books which are available in the library.
 //         → Can borrow up to 5 books at a time.
 //         → Maximum borrowing period: 30 days.
 //         → Fines: No fine for overdue books.
-//         → Cannot manage books or other users.
 
 //     • Librarian:
 //         → Can manage the library, including:
                 // • Viewing, Adding, removing, or updating books.
                 // • Adding or removing users.
-//         → Can not borrow books
 
 // 2. Books
 // Define a Book class to represent books in the library.
@@ -87,13 +142,13 @@ class Faculty : public User {
 //         • Books can only be borrowed if their status is ”Available.”
 class Book{
     public:
+        string ISBN;
         string title;
         string author;
         string publisher;
         int year;
-        string ISBN;
         string status;
-        Book(string title, string author, string publisher, int year, string ISBN, string status){
+        Book(string ISBN, string title, string author, string publisher, int year, string status){
             this->title = title;
             this->author = author;
             this->publisher = publisher;
@@ -101,11 +156,45 @@ class Book{
             this->ISBN = ISBN;
             this->status = status;
         }
+        void printBook(){
+            cout << left; // Align text to the left
+            cout << setw(12) << "Title:"     << title     << endl;
+            cout << setw(12) << "Author:"    << author    << endl;
+            cout << setw(12) << "Publisher:" << publisher << endl;
+            cout << setw(12) << "Year:"      << year      << endl;
+            cout << setw(12) << "ISBN:"      << ISBN      << endl;
+            cout << setw(12) << "Status:"    << status    << endl;
+            cout << endl;
+        }
+        ~Book(){}
 };
-// 3. Accounts
-// Create an Account class to track user activity. Each user has one account. The account must:
-//     • Maintain a record of currently borrowed books.
-//     • Track overdue books and calculate fines
+class Library{
+    public:
+        set<Book> books;
+        set<Student> students;
+        set<Faculty> faculties;
+        set<Librarian> librarians;
+        map<string, Book> bookMap;
+        map<string, Student> studentMap;
+        map<string, Faculty> facultyMap;
+        map<string, Librarian> librarianMap;
+        Library(){
+
+        }
+        void viewBooks(){
+            for(auto book : books){
+                book.printBook();
+            }
+        }
+        void viewStudents(){
+            for(auto student : students){
+                student.printStudent();
+            }
+        }
+        ~Library(){}
+}; 
+
+Library library;
 
 // 4. Rules
 // The system should persist its data using files. This ensures that the library’s state (e.g., user
@@ -143,6 +232,8 @@ class Book{
 //         ∗ If fines exist, prevent further borrowing until the fine is cleared.
 
 int main(){
+    // Creat the root librarian
+    Librarian root("root", "L0001");
 
     return 0;
 }
