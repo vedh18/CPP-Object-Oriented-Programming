@@ -10,6 +10,51 @@ using namespace std;
 // - The system will provide a clean and user-friendly interface to perform operations such as borrowing, returning, and viewing details of books and users. 
 // - It will also demonstrate the implementation of OOP concepts like inheritance, abstraction, and polymorphism through its class structure.
 
+class Account {
+    public:
+        string userID;
+        vector<Book> reservedBooks;
+        vector<Book> borrowedBooks;
+        int fine;
+        Account(){}
+        Account(string userID){
+            this->userID = userID;
+            this->fine = 0;
+        }
+        ~Account(){}
+};
+
+class User {
+public:
+    string name;
+    string userID;
+    Account account; // Account class to handle user activity
+    User(string name, string userID){
+        this->name = name;
+        this->userID = userID;
+        account.userID = userID;
+    }
+
+    ~User(){}
+};
+
+class Student : public User {
+    public:
+        Student(string name, string userID) : User(name, userID) {}
+
+        ~Student(){}
+};
+class Librarian : public User {
+    public:
+        Librarian(string name, string userID) : User(name, userID) {}
+        ~Librarian(){}
+};
+
+class Faculty : public User {
+    public:
+        Faculty(string name, string userID) : User(name, userID) {}
+        ~Faculty(){}
+};
 // 1. Users
 //     • Students:
 //         → Can only view all the books which are available in the library.
@@ -48,20 +93,20 @@ class Book{
         int year;
         string ISBN;
         string status;
-}
+        Book(string title, string author, string publisher, int year, string ISBN, string status){
+            this->title = title;
+            this->author = author;
+            this->publisher = publisher;
+            this->year = year;
+            this->ISBN = ISBN;
+            this->status = status;
+        }
+};
 // 3. Accounts
 // Create an Account class to track user activity. Each user has one account. The account must:
 //     • Maintain a record of currently borrowed books.
 //     • Track overdue books and calculate fines
 
-class Account {
-protected:
-    string userID;
-    vector<Book> reservedBooks;
-    vector<Book> borrowedBooks;
-public:
-    
-}
 // 4. Rules
 // The system should persist its data using files. This ensures that the library’s state (e.g., user
 // records, borrowed books, and fines) is retained between program sessions.
