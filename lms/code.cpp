@@ -1,4 +1,5 @@
 #include <bits/stdc++.h>
+#include <ctime>
 using namespace std;
 // LIBRARY MANAGEMENT SYSTEM:
 
@@ -8,6 +9,10 @@ using namespace std;
 // - The system will provide a clean and user-friendly interface to perform operations such as borrowing, returning, and viewing details of books and users. 
 // - It will also demonstrate the implementation of OOP concepts like inheritance, abstraction, and polymorphism through its class structure.
 
+// Lets say we have a unit of time in terms of seconds.
+// 1 day = 86400 seconds
+// 1 minute = 60 seconds
+int timeUnit = 86400; // 1 day
 class Library{
     public:
         set<Book> books;
@@ -19,6 +24,7 @@ class Library{
         map<string, Faculty> facultyMap;
         map<string, Librarian> librarianMap;
         Library(){
+            
 
         }
         void viewBooks(){
@@ -28,18 +34,56 @@ class Library{
         }
         void viewStudents(){
             for(auto student : students){
-                student.printStudent();
+                student.printUser();
+            }
+        }
+        void viewFaculties(){
+            for (auto faculty : faculties){
+                faculty.printUser();
+            }
+        }
+        void viewLibrarians(){
+            for(auto librarian : librarians){
+                librarian.printUser();
             }
         }
         ~Library(){}
 }; 
 
 Library library;
+
+class History {
+    public:
+        string action; 
+        // Borrowed, Returned, Reserved, Unreserved, Fine Paid, Created Book, Updated Book, Deleted Book, 
+        // Created Student, Updated Student, Deleted Student, Created Faculty, Updated Faculty, Deleted Faculty, 
+        // Created Librarian, Updated Librarian, Deleted Librarian.
+        string userID = "NA"; 
+        time_t time;
+        History(string action){
+            this->action = action;
+            this->time = std::time(0);
+        }
+        History(string action, string userID){
+            this->action = action;
+            this->userID = userID;
+            this->time = std::time(0);
+        }
+        void printHistory(){
+            if (userID == "NA"){
+                cout << left << setw(15) << action  << setw(15) << userID << setw(30) << std::ctime(&time) << endl;
+            }
+            else
+                cout << left << setw(15) << action  << setw(30) << std::ctime(&time) << endl;
+        }
+        ~History(){}
+};
 class Account {
     public:
         string userID;
         vector<Book> reservedBooks;
         vector<Book> borrowedBooks;
+        vector<History> history;
         int fine;
         Account(){}
         Account(string userID){
@@ -59,18 +103,18 @@ public:
         this->userID = userID;
         this->account.userID = userID;
     }
-
+    void printUser(){
+        cout << left;
+        cout << setw(12) << "Name: " << name << endl;
+        cout << setw(12) << "ID: " << userID << endl;
+        cout << endl;
+    }   
     ~User(){}
 };
 
 class Student : public User {
     public:
         Student(string name, string userID) : User(name, userID) {}
-        void printStudent(){
-            cout << left;
-            cout << setw(12) << "Student Name: " << name << endl;
-            cout << setw(12) << "ID: " << userID << endl;
-        }
         ~Student(){}
 };
 class Librarian : public User {
@@ -156,7 +200,6 @@ class Librarian : public User {
 class Faculty : public User {
     public:
         Faculty(string name, string userID) : User(name, userID) {}
-
         ~Faculty(){}
 };
 // 1. Users
@@ -215,6 +258,14 @@ class Book{
         ~Book(){}
 };
 
+class borrowedBook: public Book{
+    public:
+        time_t issue_time;
+        borrowedBook(Book book, time_t t){
+            this->status = "Borrowed";
+            this->issue_time = t;
+        }
+};
 // 4. Rules
 // The system should persist its data using files. This ensures that the library’s state (e.g., user
 // records, borrowed books, and fines) is retained between program sessions.
