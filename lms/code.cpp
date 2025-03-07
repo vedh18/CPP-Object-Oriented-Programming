@@ -81,8 +81,8 @@ class History {
 class Account {
     public:
         string userID;
-        vector<Book> reservedBooks;
-        vector<Book> borrowedBooks;
+        set<Book> reservedBooks;
+        set<Book> borrowedBooks;
         vector<History> history;
         int fine;
         Account(){}
@@ -92,30 +92,61 @@ class Account {
         }
         ~Account(){}
 };
-
 class User {
-public:
-    string name;
-    string userID;
-    Account account; // Account class to handle user activity
-    User(string name, string userID){
-        this->name = name;
-        this->userID = userID;
-        this->account.userID = userID;
-    }
-    void printUser(){
-        cout << left;
-        cout << setw(12) << "Name: " << name << endl;
-        cout << setw(12) << "ID: " << userID << endl;
-        cout << endl;
-    }   
-    ~User(){}
-};
+    public:
+        string name;
+        string userID;
+        Account account; // Account class to handle user activity
+        User(string name, string userID){
+            this->name = name;
+            this->userID = userID;
+            this->account.userID = userID;
+        }
+        void printUser(){
+            cout << left;
+            cout << setw(12) << "Name: " << name << endl;
+            cout << setw(12) << "ID: " << userID << endl;
+            cout << endl;
+        }   
+        void borrowBook(){
+            if (this->account.borrowedBooks.size() >= 3){
+                cout << "Cannot borrow more than 3 books" << endl;
+                return;
+            }
+            cout << "Here are the available books: " << endl;
+            library.viewBooks();
+            cout << "Enter the ISBN of the book you want to borrow: ";
+            cin.ignore();
+            string ISBN;
+            getline(cin, ISBN);
+            Book book = library.bookMap[ISBN];
+            this->account.borrowedBooks.insert(book);
+            book.borrowBook();
+        }
+        void returnBook(){
+            if (this->account.borrowedBooks.size() == 0){
+                cout << "No books to return" << endl;
+                return;
+            }
+            cout << "Here are the books you have borrowed: " << endl;
+            for (auto book : this->account.borrowedBooks){
+                book.printBook();
+            }
+            cout << "Enter the ISBN of the book you want to return: ";
+            cin.ignore();
+            string ISBN;
+            getline(cin, ISBN);
+            Book book = library.bookMap[ISBN];
+            book.returnBook();
+            this->account.borrowedBooks.erase(book);
+        }
+        ~User(){}
+    };
+
 
 class Student : public User {
     public:
         Student(string name, string userID) : User(name, userID) {}
-
         ~Student(){}
 };
 class Librarian : public User {
@@ -272,6 +303,24 @@ class Book{
             cout << setw(12) << "ISBN:"      << ISBN      << endl;
             cout << setw(12) << "Status:"    << status    << endl;
             cout << endl;
+        }
+        void borrowBook(){
+            if (status == "Available"){
+                status = "Borrowed";
+                borrowedTime = std::time(0);
+            }
+            else{
+                cout << "Book is currently " << status << endl;
+            }
+        }
+        void returnBook(){
+            if (status == "Borrowed"){
+                status = "Available";
+                borrowedTime = 0;
+            }
+            else{
+                cout << "Book is currently " << status << endl;
+            }
         }
         ~Book(){}
 };
