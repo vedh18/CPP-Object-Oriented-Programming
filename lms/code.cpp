@@ -6,16 +6,27 @@ using namespace std;
 // - Students and Faculty: Can borrow books, return them, and view their borrowing history.
 
 // - Users should be able to borrow and return books within specified limits
-// - Students will incur fines for overdue returns, while faculty members will have extended borrowing privileges without fines. Librarians will have the authority to add, remove, and update both books and users in the system.
-// - The system will provide a clean and user-friendly interface to perform operations such as borrowing, returning, and viewing details of books and users. 
+// - Students will incur fines for overdue returns, while faculty members will have extended borrowing privileges without fines. Librarians will have the authority to  update both books and users in the system.
+// - The system will provide a clean and user-friendly interface to perform operations such as borrowing, returning.
 // - It will also demonstrate the implementation of OOP concepts like inheritance, abstraction, and polymorphism through its class structure.
 
 // Lets say we have a unit of time in terms of seconds.
 // 1 day = 86400 seconds
 // 1 minute = 60 seconds
 int timeUnit = 86400; // 1 day
+
+int printMenu(vector<string> menu){
+    for (int i = 0; i < menu.size(); i++){
+        cout << i+1 << ". " << menu[i] << endl;
+    }
+    cout << "Enter your choice: ";
+    int x;
+    cin >> x;
+    return x;
+}
 class Library{
     public:
+        // TODO: check if all the data structures are updated carefully or not.
         set<Book> books;
         set<Student> students;
         set<Faculty> faculties;
@@ -25,17 +36,19 @@ class Library{
         map<string, Faculty> facultyMap;
         map<string, Librarian> librarianMap;
         Library(){
-            
+            // take data from files and store in the respective data structures
 
         }
-        void viewAllBooks(){
+        void viewAvailableBooks(){
             for(auto book : books){
-                book.printBook();
+                if (book.status == "Available"){
+                    book.printBook();
+                }
             }
         }
-        void viewBorrowedBooks(){
+        void viewReservableBooks(){
             for(auto book : books){
-                if (book.status == "Borrowed"){
+                if (book.status == "Borrowed" && book.reserved == false){
                     book.printBook();
                 }
             }
@@ -84,6 +97,7 @@ class History {
 };
 class Account {
     public:
+        string userType; // Student/Faculty/Librarian
         string userID;
         set<Book> reservedBooks;
         set<Book> borrowedBooks;
@@ -94,6 +108,16 @@ class Account {
             this->userID = userID;
             this->fine = 0;
         }
+        void checkReservedBooks(){
+            for (auto book : reservedBooks){
+                if (book.status == "Available"){
+                    cout << "Book " << book.title << " is now available." << endl;
+                    book.reserved = false;
+                    book.reserverID = "";
+                    book.status = "Available";
+                }
+            }
+        }
         ~Account(){}
 };
 class User {
@@ -101,10 +125,11 @@ class User {
         string name;
         string userID;
         Account account; // Account class to handle user activity
-        User(string name, string userID){
+        User(string name, string userID, string userType){
             this->name = name;
             this->userID = userID;
             this->account.userID = userID;
+            this->account.userType = userType;
         }
         void printUser(){
             cout << left;
@@ -118,7 +143,7 @@ class User {
                 return;
             }
             cout << "Here are the available books: " << endl;
-            library.viewAllBooks();
+            library.viewAvailableBooks();
             cout << "Enter the ISBN of the book you want to borrow: ";
             cin.ignore();
             string ISBN;
@@ -146,13 +171,13 @@ class User {
         }
         void reserveBook(){
             cout << "Here are the books which are not available currently and can be reserved: " << endl;
-            library.viewBorrowedBooks();
+            library.viewReservableBooks();
             cout << "Enter the ISBN of the book you want to reserve: ";
             cin.ignore();
             string ISBN;
             getline(cin, ISBN);
             Book book = library.bookMap[ISBN];
-            book.reseverBook();
+            book.reseverBook(this->userID);
             this->account.reservedBooks.insert(book);
             cout << "Book reserved successfully, you will be notified when it becomes available." << endl;
         }
@@ -167,12 +192,12 @@ class User {
 
 class Student : public User {
     public:
-        Student(string name, string userID) : User(name, userID) {}
+        Student(string name, string userID) : User(name, userID, "Student") {}
         ~Student(){}
 };
 class Librarian : public User {
     public:
-        Librarian(string name, string userID) : User(name, userID) {}
+        Librarian(string name, string userID) : User(name, userID, "Librarian") {}
         void addBook() {
             string ISBN, title, author, publisher, status;
             int year;
@@ -262,24 +287,73 @@ class Librarian : public User {
             library.librarians.erase(library.librarianMap[userID]);
             library.librarianMap.erase(userID);
         }
-        
+        // TODO: Implement update student, faculty, librarian and books
+        // TODO: remember to update the book status carefully.
+        // void updateBook(){
+        //     string bookID;
+        //     cout << "Enter Book ID: ";
+        //     cin >> bookID;
+        //     library.books.erase(library.bookMap[bookID]);
+        //     // library.bookMap.erase(bookID);
+        //     cout << "Enter the field you want to update: "  << endl;
+        //     int x = printMenu({"Title", "Author", "Publisher", "Year", "Status"});
+        //     if (x == 1){
+        //         string title;
+        //         cout << "Enter new title: ";
+        //         cin >> title;
+        //         library.bookMap[bookID].title = title;
+        //     }
+        //     else if (x == 2){
+        //         string author;
+        //         cout << "Enter new author: ";
+        //         cin >> author;
+        //         library.bookMap[bookID].author = author;
+        //     }
+        //     else if (x == 3){
+        //         string publisher;
+        //         cout << "Enter new publisher: ";
+        //         cin >> publisher;
+        //         library.bookMap[bookID].publisher = publisher;
+        //     }
+        //     else if (x == 4){
+        //         int year;
+        //         cout << "Enter new year: ";
+        //         cin >> year;
+        //         library.bookMap[bookID].year = year;
+        //     }
+        //     else if (x == 5){
+        //         string old_status = library.bookMap[bookID].status;
+        //         int i1 = printMenu({"Available", "Borrowed", "Reserved"});
+        //         if (i1 == 1){
+        //             if (old_status == "Borrowed"){
+
+        //             }
+        //         }
+        //         else if (i1 == 2){
+        //             library.bookMap[bookID].status = "Borrowed";
+        //         }
+        //         else if (i1 == 3){
+        //             library.bookMap[bookID].status = "Reserved";
+        //         }
+        //         cin >> status;
+                
+        //     }
+        //     library.books.insert(library.bookMap[bookID]);
+        // }
         ~Librarian(){}
 };
 
 class Faculty : public User {
     public:
-        Faculty(string name, string userID) : User(name, userID) {}
+        Faculty(string name, string userID) : User(name, userID, "Faculty") {}
         ~Faculty(){}
 };
 // 1. Users
 //     • Students:
-//         → Can only view all the books which are available in the library.
-//         → Can borrow up to 3 books at a time.
 //         → Maximum borrowing period: 15 days.
 //         → Fines: 10 rupees per day for overdue books.
 
 //     • Faculty:
-//         → Can only view all the books which are available in the library.
 //         → Can borrow up to 5 books at a time.
 //         → Maximum borrowing period: 30 days.
 //         → Fines: No fine for overdue books.
@@ -291,23 +365,27 @@ class Faculty : public User {
 
 // 2. Books
 // Define a Book class to represent books in the library.
-//     Attributes:
-//         • title, author, publisher, year, and ISBN.
-//         • Status: Tracks whether the book is available, borrowed, or reserved.
-
 //     Constraints:
 //         • Start with at least 5 books in the system.
 //         • Books can only be borrowed if their status is ”Available.”
 class Book{
     public:
+        // generic details
         string ISBN;
         string title;
         string author;
         string publisher;
         int year;
+
+        // book status
         string status; // Available, Borrowed, Reserved
-        bool reserved = false;
+
+        string borrowerID;
         time_t borrowedTime = 0;
+
+        bool reserved = false;
+        string reserverID;
+
         Book(){}
         Book(string ISBN, string title, string author, string publisher, int year, string status){
             this->title = title;
@@ -337,7 +415,11 @@ class Book{
             }
         }
         void returnBook(){
-            if (status == "Borrowed"){
+            if (reserved){
+                status = "Reserved";
+                borrowedTime = 0;
+            }
+            else if (status == "Borrowed"){
                 status = "Available";
                 borrowedTime = 0;
             }
@@ -345,9 +427,10 @@ class Book{
                 cout << "Book is currently " << status << endl;
             }
         }
-        void reseverBook(){
+        void reseverBook(string userID){
             if (status == "Borrowed"){
                 reserved = true;
+                reserverID = userID;
             }
             else{
                 cout << "Book is currently " << status << endl;
