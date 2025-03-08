@@ -39,6 +39,7 @@ class Library{
         map<string, Librarian> librarianMap;
         Library(){
             // take data from files and store in the respective data structures
+            
 
         }
         void viewAvailableBooks(){
@@ -488,26 +489,6 @@ class Book{
 // The system should persist its data using files. This ensures that the library’s state (e.g., user
 // records, borrowed books, and fines) is retained between program sessions.
 //     • Borrowing Rules:
-//         • Students and faculty can borrow books based on their role constraints.
-//         • If a user tries to borrow more than the allowed number of books, the system should
-//         deny the request.
-//         • If a user has unpaid fines, borrowing new books should not be allowed until the fines
-//         are cleared.
-//         • The system should provide an option for users to simulate payment of fines.
-//         • Users can view their total outstanding fines and mark them as paid through a dedicated menu option.
-//         • Once the payment is made, the fine amount should reset to zero, and borrowing
-//         restrictions should be lifted.
-//         • Returning and Updating Rules:
-//     • Update Book Status:
-//         Upon the return of a book, its status should be updated to “Available” in the system.
-//         • Fine Calculation:
-//             ∗ For Students:
-//                Fine = Days Overdue × 10 rupees/day. 
-//             ∗ For Faculty:
-//                 · No fine for overdue books.
-//                 · Faculty members cannot borrow additional books if they (a) Have already reached
-//                 the limit of 5 borrowed books, or (b) Have an overdue book for more than 60
-//                 days.
 //     • Overdue Check:
 //         If the book is returned after the borrowing period (15 days for students, 30 days for
 //         faculty), the system should:
