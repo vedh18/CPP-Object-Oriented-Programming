@@ -4,6 +4,7 @@ using namespace std;
 // LIBRARY MANAGEMENT SYSTEM:
 
 // - Students and Faculty: Can borrow books, return them, and view their borrowing history.
+
 // - Users should be able to borrow and return books within specified limits
 // - Students will incur fines for overdue returns, while faculty members will have extended borrowing privileges without fines. Librarians will have the authority to add, remove, and update both books and users in the system.
 // - The system will provide a clean and user-friendly interface to perform operations such as borrowing, returning, and viewing details of books and users. 
@@ -27,9 +28,16 @@ class Library{
             
 
         }
-        void viewBooks(){
+        void viewAllBooks(){
             for(auto book : books){
                 book.printBook();
+            }
+        }
+        void viewBorrowedBooks(){
+            for(auto book : books){
+                if (book.status == "Borrowed"){
+                    book.printBook();
+                }
             }
         }
         void viewStudents(){
@@ -58,7 +66,6 @@ class History {
         // Borrowed, Returned, Reserved, Unreserved, Fine Paid, Created Book, Updated Book, Deleted Book, 
         // Created Student, Updated Student, Deleted Student, Created Faculty, Updated Faculty, Deleted Faculty, 
         // Created Librarian, Updated Librarian, Deleted Librarian.
-        string userID = "NA"; 
         time_t time;
         History(string action){
             this->action = action;
@@ -66,15 +73,12 @@ class History {
         }
         History(string action, string userID){
             this->action = action;
-            this->userID = userID;
+            this->action += " ";
+            this->action += userID;
             this->time = std::time(0);
         }
         void printHistory(){
-            if (userID == "NA"){
-                cout << left << setw(15) << action  << setw(15) << userID << setw(30) << std::ctime(&time) << endl;
-            }
-            else
-                cout << left << setw(15) << action  << setw(30) << std::ctime(&time) << endl;
+                cout << left << setw(30) << action  << setw(30) << std::ctime(&time) << endl;
         }
         ~History(){}
 };
@@ -114,14 +118,14 @@ class User {
                 return;
             }
             cout << "Here are the available books: " << endl;
-            library.viewBooks();
+            library.viewAllBooks();
             cout << "Enter the ISBN of the book you want to borrow: ";
             cin.ignore();
             string ISBN;
             getline(cin, ISBN);
             Book book = library.bookMap[ISBN];
-            this->account.borrowedBooks.insert(book);
             book.borrowBook();
+            this->account.borrowedBooks.insert(book);
         }
         void returnBook(){
             if (this->account.borrowedBooks.size() == 0){
@@ -139,6 +143,23 @@ class User {
             Book book = library.bookMap[ISBN];
             book.returnBook();
             this->account.borrowedBooks.erase(book);
+        }
+        void reserveBook(){
+            cout << "Here are the books which are not available currently and can be reserved: " << endl;
+            library.viewBorrowedBooks();
+            cout << "Enter the ISBN of the book you want to reserve: ";
+            cin.ignore();
+            string ISBN;
+            getline(cin, ISBN);
+            Book book = library.bookMap[ISBN];
+            book.reseverBook();
+            this->account.reservedBooks.insert(book);
+            cout << "Book reserved successfully, you will be notified when it becomes available." << endl;
+        }
+        void viewHistory(){
+            for (auto history : this->account.history){
+                history.printHistory();
+            }
         }
         ~User(){}
     };
@@ -241,6 +262,7 @@ class Librarian : public User {
             library.librarians.erase(library.librarianMap[userID]);
             library.librarianMap.erase(userID);
         }
+        
         ~Librarian(){}
 };
 
@@ -283,7 +305,8 @@ class Book{
         string author;
         string publisher;
         int year;
-        string status;
+        string status; // Available, Borrowed, Reserved
+        bool reserved = false;
         time_t borrowedTime = 0;
         Book(){}
         Book(string ISBN, string title, string author, string publisher, int year, string status){
@@ -317,6 +340,14 @@ class Book{
             if (status == "Borrowed"){
                 status = "Available";
                 borrowedTime = 0;
+            }
+            else{
+                cout << "Book is currently " << status << endl;
+            }
+        }
+        void reseverBook(){
+            if (status == "Borrowed"){
+                reserved = true;
             }
             else{
                 cout << "Book is currently " << status << endl;
