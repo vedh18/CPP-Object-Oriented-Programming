@@ -24,6 +24,8 @@ int printMenu(vector<string> menu){
     cin >> x;
     return x;
 }
+
+// TODO: Use private attributes, and also validate input wherever we are recieving the input.
 class Library{
     public:
         // TODO: check if all the data structures are updated carefully or not.
@@ -103,6 +105,8 @@ class Account {
         set<Book> borrowedBooks;
         vector<History> history;
         int fine;
+        // TODO: Overdue books displayed to user and faculty.
+        int overdueBooks = 0;
         Account(){}
         Account(string userID){
             this->userID = userID;
@@ -117,6 +121,23 @@ class Account {
                     book.status = "Available";
                 }
             }
+        }
+        void calcFine(){
+            for (auto book : borrowedBooks){
+                time_t currentTime = std::time(0);
+                int days = (currentTime - book.borrowedTime) / timeUnit;
+                if (userType == "Student"){
+                    fine += days * 10;
+                }
+                else if (userType == "Faculty"){
+                    if (days > 60){
+                        overdueBooks++;
+                    }
+                }
+            }
+        }
+        void payFine(){
+            fine = 0;
         }
         ~Account(){}
 };
@@ -137,21 +158,6 @@ class User {
             cout << setw(12) << "ID: " << userID << endl;
             cout << endl;
         }   
-        void borrowBook(){
-            if (this->account.borrowedBooks.size() >= 3){
-                cout << "Cannot borrow more than 3 books" << endl;
-                return;
-            }
-            cout << "Here are the available books: " << endl;
-            library.viewAvailableBooks();
-            cout << "Enter the ISBN of the book you want to borrow: ";
-            cin.ignore();
-            string ISBN;
-            getline(cin, ISBN);
-            Book book = library.bookMap[ISBN];
-            book.borrowBook();
-            this->account.borrowedBooks.insert(book);
-        }
         void returnBook(){
             if (this->account.borrowedBooks.size() == 0){
                 cout << "No books to return" << endl;
@@ -193,6 +199,25 @@ class User {
 class Student : public User {
     public:
         Student(string name, string userID) : User(name, userID, "Student") {}
+        void borrowBook(){
+            if (this->account.borrowedBooks.size() >= 3){
+                cout << "Cannot borrow more than 3 books" << endl;
+                return;
+            }
+            if (this->account.fine > 0){
+                cout << "You have a fine of " << this->account.fine << " rupees, please pay the fine first." << endl;
+                return;
+            }
+            cout << "Here are the available books: " << endl;
+            library.viewAvailableBooks();
+            cout << "Enter the ISBN of the book you want to borrow: ";
+            cin.ignore();
+            string ISBN;
+            getline(cin, ISBN);
+            Book book = library.bookMap[ISBN];
+            book.borrowBook();
+            this->account.borrowedBooks.insert(book);
+        }
         ~Student(){}
 };
 class Librarian : public User {
@@ -346,6 +371,27 @@ class Librarian : public User {
 class Faculty : public User {
     public:
         Faculty(string name, string userID) : User(name, userID, "Faculty") {}
+        void borrowBook(){
+            this->account.calcFine();
+            if (this->account.borrowedBooks.size() >= 5){
+                cout << "Cannot borrow more than 5 books" << endl;
+                return;
+            }
+            if (this->account.overdueBooks > 0){
+                cout << "You have " << this->account.overdueBooks << " books overrdue, please return them first." << endl;
+                return;
+            }
+
+            cout << "Here are the available books: " << endl;
+            library.viewAvailableBooks();
+            cout << "Enter the ISBN of the book you want to borrow: ";
+            cin.ignore();
+            string ISBN;
+            getline(cin, ISBN);
+            Book book = library.bookMap[ISBN];
+            book.borrowBook();
+            this->account.borrowedBooks.insert(book);
+        }
         ~Faculty(){}
 };
 // 1. Users
