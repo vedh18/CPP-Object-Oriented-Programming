@@ -38,9 +38,131 @@ class Library{
         map<string, Faculty> facultyMap;
         map<string, Librarian> librarianMap;
         Library(){
-            // take data from files and store in the respective data structures
-            
+            readFromBooks("files\\books.csv");
+            readFromStudents("files\\students.csv");
+            readFromFaculties("files\\faculties.csv");
+            readFromLibrarians("files\\librarians.csv");
+        }
+        void readFromBooks(string file_path){
+            ifstream file(file_path);
+            if (!file.is_open()) {
+                cerr << "Error opening file" << endl;
+                return;
+            }
+            string line; 
+            Book book;
+            while (getline(file, line)) {
+                if (line.empty()) {
+                    break;
+                }
+                vector<string> row; 
+                string cell; 
 
+                istringstream lineStream(line);
+
+                while (getline(lineStream, cell, ',')) {
+                    row.push_back(cell);
+                }
+                book.ISBN = row[0];
+                book.title = row[1];
+                book.author = row[2];
+                book.publisher = row[3];
+                book.year = stoi(row[4]);
+                book.status = row[5];
+                book.borrowerID = row[6];
+                book.borrowedTime = stoi(row[7]);
+                book.reserved = (row[8] == "1" ? true : false);
+                book.reserverID = row[9];
+                books.insert(book);
+                bookMap[book.ISBN] = book;
+            }
+            file.close();
+        }
+        void readFromStudents(string file_path){
+            ifstream file(file_path);
+            if (!file.is_open()) {
+                cerr << "Error opening file" << endl;
+                return;
+            }
+            string line; 
+            Student student;
+            while (getline(file, line)) {
+                if (line.empty()) {
+                    break;
+                }
+                vector<string> row; 
+                string cell; 
+
+                istringstream lineStream(line);
+
+                while (getline(lineStream, cell, ',')) {
+                    row.push_back(cell);
+                }
+                // userID,Student Name,Book 1,Issued Date,Book 2,Issued Date,Book 3,Issued Date,Reserved Books (ID)
+                student.userID = row[0];
+                student.name = row[1];
+                student.account.borrowedBooks.insert(bookMap[row[2]]);
+                
+                student.account.borrowedBooks.insert(bookMap[row[4]]);
+                student.account.borrowedBooks.insert(bookMap[row[6]]);
+                students.insert(student);
+                studentMap[student.userID] = student;
+            }
+            file.close();
+        }
+        void readFromFaculties(string file_path){
+            ifstream file(file_path);
+            if (!file.is_open()) {
+                cerr << "Error opening file" << endl;
+                return;
+            }
+            string line; 
+            Faculty faculty;
+            while (getline(file, line)) {
+                if (line.empty()) {
+                    break;
+                }
+                vector<string> row; 
+                string cell; 
+
+                istringstream lineStream(line);
+
+                while (getline(lineStream, cell, ',')) {
+                    row.push_back(cell);
+                }
+                faculty.name = row[0];
+                faculty.userID = row[1];
+                faculties.insert(faculty);
+                facultyMap[faculty.userID] = faculty;
+            }
+            file.close();
+        }
+        void readFromLibrarians(string file_path){
+            ifstream file(file_path);
+            if (!file.is_open()) {
+                cerr << "Error opening file" << endl;
+                return;
+            }
+            string line; 
+            Librarian librarian;
+            while (getline(file, line)) {
+                if (line.empty()) {
+                    break;
+                }
+                vector<string> row; 
+                string cell; 
+
+                istringstream lineStream(line);
+
+                while (getline(lineStream, cell, ',')) {
+                    row.push_back(cell);
+                }
+                librarian.name = row[0];
+                librarian.userID = row[1];
+                librarians.insert(librarian);
+                librarianMap[librarian.userID] = librarian;
+            }
+            file.close();
         }
         void viewAvailableBooks(){
             for(auto book : books){
@@ -147,6 +269,7 @@ class User {
         string name;
         string userID;
         Account account; // Account class to handle user activity
+        User(){}
         User(string name, string userID, string userType){
             this->name = name;
             this->userID = userID;
@@ -199,6 +322,7 @@ class User {
 
 class Student : public User {
     public:
+        Student(){}
         Student(string name, string userID) : User(name, userID, "Student") {}
         void borrowBook(){
             if (this->account.borrowedBooks.size() >= 3){
@@ -223,6 +347,7 @@ class Student : public User {
 };
 class Librarian : public User {
     public:
+        Librarian(){}
         Librarian(string name, string userID) : User(name, userID, "Librarian") {}
         void addBook() {
             string ISBN, title, author, publisher, status;
@@ -371,6 +496,7 @@ class Librarian : public User {
 
 class Faculty : public User {
     public:
+        Faculty(){}
         Faculty(string name, string userID) : User(name, userID, "Faculty") {}
         void borrowBook(){
             this->account.calcFine();
