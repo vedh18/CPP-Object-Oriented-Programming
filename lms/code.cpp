@@ -28,7 +28,7 @@ int printMenu(vector<string> menu){
 time_t convertDateString(const std::string &dateStr) {
     std::tm tm = {};
     std::istringstream ss(dateStr);
-    ss >> std::get_time(&tm, "%d %b %Y");
+    ss >> std::get_time(&tm, "%d %b %Y %H:%M:%S");
     if (ss.fail()) {
         return -1;
     }
@@ -53,7 +53,6 @@ std::string timeToDateString(time_t t) {
 // TODO: Use private attributes, and also validate input wherever we are recieving the input.
 class Library{
     public:
-        // TODO: check if all the data structures are updated carefully or not.
         set<Book> books;
         set<Student> students;
         set<Faculty> faculties;
@@ -203,11 +202,32 @@ class Library{
             }
             file.close();
         }
-        void viewAvailableBooks(){
-            for(auto book : books){
-                if (book.status == "Available"){
+        void viewAvailableBooks() {
+            time_t currentTime = std::time(0);
+            // Temporary container to hold the updated books.
+            std::vector<Book> updatedBooks;
+            
+            for (auto book : books) {  // iterate by value (copy)
+                if (book.reserved) {
+                    int days = (currentTime - book.reservedTime) / timeUnit;
+                    if (days > 5) {
+                        book.status = "Available";
+                        book.reserved = false;
+                        book.reservedTime = 0;
+                        book.reserverID = "";
+                        bookMap[book.ISBN] = book; // update in the map
+                    }
+                }
+                if (book.status == "Available") {
                     book.printBook();
                 }
+                updatedBooks.push_back(book);
+            }
+            
+            // Clear the original set and reinsert the updated books.
+            books.clear();
+            for (auto &book : updatedBooks) {
+                books.insert(book);
             }
         }
         void viewReservableBooks(){
@@ -353,11 +373,15 @@ class Account {
     public:
         string userType; // Student/Faculty/Librarian
         string userID;
+
         set<Book> reservedBooks;
         set<Book> borrowedBooks;
+
         vector<History> history;
-        int fine;
+
+        int fine = 0;
         int overdueBooks = 0;
+
         Account(){}
         Account(string userID){
             this->userID = userID;
@@ -428,26 +452,62 @@ class User {
             cin.ignore();
             string ISBN;
             getline(cin, ISBN);
+
             Book book = library.bookMap[ISBN];
-            book.returnBook(this->account.userType);
             this->account.borrowedBooks.erase(book);
+            library.books.erase(book);
+
+            book.returnBook(this->account.userType);
+
+            library.bookMap[ISBN] = book;
+            library.books.insert(book);
+
             History history("Returned Book", book.title, book.ISBN);
             this->account.history.push_back(history);
         }
-        // TODO: If time permits, put a cap on the number of days the book can be reerved up to after the book becomes available.
         void reserveBook(){
+            if (this->account.reservedBooks.size() >= 3){
+                cout << "Cannot reserve more than 3 books" << endl;
+                return;
+            }
             cout << "Here are the books which are not available currently and can be reserved: " << endl;
             library.viewReservableBooks();
             cout << "Enter the ISBN of the book you want to reserve: ";
             cin.ignore();
             string ISBN;
             getline(cin, ISBN);
+
             Book book = library.bookMap[ISBN];
+            library.books.erase(book);
+
             book.reseverBook(this->userID);
+
+            library.bookMap[ISBN] = book;
+            library.books.insert(book);
+
             this->account.reservedBooks.insert(book);
             cout << "Book reserved successfully, you will be notified when it becomes available." << endl;
             History history("Reserved Book", book.title, book.ISBN);
             this->account.history.push_back(history);
+        }
+        void unreserveBook(){
+            cout << "Here are the books you have reserved: " << endl;
+            for (auto book : this->account.reservedBooks){
+                book.printBook();
+            }
+            cout << "Enter the ISBN of the book you want to unreserve: ";
+            cin.ignore();
+            string ISBN;
+            getline(cin, ISBN);
+
+            Book book = library.bookMap[ISBN];
+            library.books.erase(book);
+            this->account.reservedBooks.erase(book);
+
+            book.unreserveBook();
+
+            library.bookMap[ISBN] = book;
+            library.books.insert(book);
         }
         ~User(){}
     };
@@ -474,9 +534,16 @@ class Student : public User {
             cin.ignore();
             string ISBN;
             getline(cin, ISBN);
+
             Book book = library.bookMap[ISBN];
+            library.books.erase(book);
+            
             book.borrowBook();
+
             this->account.borrowedBooks.insert(book);
+            library.bookMap[ISBN] = book;
+            library.books.insert(book);
+
             History history("Borrowed Book", book.title, book.ISBN);
             this->account.history.push_back(history);
         }
@@ -486,6 +553,8 @@ class Librarian : public User {
     public:
         Librarian(){}
         Librarian(string name, string userID) : User(name, userID, "Librarian") {}
+        
+        // By default while adding book status will be available only.
         void addBook() {
             string ISBN, title, author, publisher, status;
             int year;
@@ -504,11 +573,11 @@ class Librarian : public User {
             cin >> year;
             
             cin.ignore();
-            cout << "Enter Book Status: ";
-            getline(cin, status); 
-            Book book(ISBN, title, author, publisher, year, status);
+            Book book(ISBN, title, author, publisher, year, "Available");
+
             library.books.insert(book);
             library.bookMap[ISBN] = book;
+
             History history("Created Book", book.title, book.ISBN);
             this->account.history.push_back(history);
         }
@@ -737,8 +806,13 @@ class Faculty : public User {
             string ISBN;
             getline(cin, ISBN);
             Book book = library.bookMap[ISBN];
+            library.books.erase(book);
+
             book.borrowBook();
+
             this->account.borrowedBooks.insert(book);
+            library.bookMap[ISBN] = book;
+            library.books.insert(book);
             History history("Borrowed Book", book.title, book.ISBN);
             this->account.history.push_back(history);
         }
@@ -776,6 +850,7 @@ class Book{
         time_t borrowedTime = 0;
 
         bool reserved = false;
+        time_t reservedTime = 0;
         string reserverID;
 
         Book(){}
@@ -818,6 +893,7 @@ class Book{
             //             ∗ Display to User Side
             if (reserved){
                 status = "Reserved";
+                reservedTime = std::time(0);
                 borrowedTime = 0;
             }
             else if (status == "Borrowed"){
@@ -846,6 +922,13 @@ class Book{
             }
             else{
                 cout << "Book is currently " << status << endl;
+            }
+        }
+        void unreserveBook(){
+            reserved = false;
+            reserverID = "";
+            if (status == "Reserved"){
+                status = "Available";
             }
         }
         ~Book(){}
