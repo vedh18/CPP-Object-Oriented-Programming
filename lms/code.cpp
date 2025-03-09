@@ -47,7 +47,7 @@ std::vector<std::string> split(const std::string &s, char delimiter) {
 std::string timeToDateString(time_t t) {
     std::tm* tm_ptr = std::localtime(&t);
     std::ostringstream oss;
-    oss << std::put_time(tm_ptr, "%d %b %Y");
+    oss << std::put_time(tm_ptr, "%d %b %Y %H:%M:%S");
     return oss.str();
 }
 // TODO: Use private attributes, and also validate input wherever we are recieving the input.
