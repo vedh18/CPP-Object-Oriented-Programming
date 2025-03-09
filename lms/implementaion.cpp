@@ -1,90 +1,219 @@
-// LIBRARY MANAGEMENT SYSTEM:
-
-// - Students and Faculty: Can borrow books, return them, and view their borrowing history.
-// - Librarians: Can manage books and users.
-// - Each user and book will have unique id
-// - Users should be able to borrow and return books within specified limits
-// - Students will incur fines for overdue returns, while faculty members will have extended borrowing privileges without fines. Librarians will have the authority to add, remove, and update both books and users in the system.
-// - The system will provide a clean and user-friendly interface to perform operations such as borrowing, returning, and viewing details of books and users. 
-// - It will also demonstrate the implementation of OOP concepts like inheritance, abstraction, and polymorphism through its class structure.
-
-// 1. Users
-//     • Students:
-//         → Can borrow up to 3 books at a time.
-//         → Maximum borrowing period: 15 days.
-//         → Fines: 10 rupees per day for overdue books.
-//         → Cannot manage books or other users.
-
-//     • Faculty:
-//         → Can borrow up to 5 books at a time.
-//         → Maximum borrowing period: 30 days.
-//         → Fines: No fine for overdue books.
-//         → Cannot manage books or other users.
-
-//     • Librarian:
-//         → Can manage the library, including:
-//         • Adding, removing, or updating books.
-//         • Adding or removing users.
-//         → Can not borrow books
-
-// 2. Books
-// Define a Book class to represent books in the library.
-//     Attributes:
-//         • title, author, publisher, year, and ISBN.
-//         • Status: Tracks whether the book is available, borrowed, or reserved.
-
-//     Constraints:
-//         • Start with at least 5 books in the system.
-//         • Books can only be borrowed if their status is ”Available.”
-
-// 3. Accounts
-// Create an Account class to track user activity. Each user has one account. The account must:
-//     • Maintain a record of currently borrowed books.
-//     • Track overdue books and calculate fines
-
-// 4. Rules
-// The system should persist its data using files. This ensures that the library’s state (e.g., user
-// records, borrowed books, and fines) is retained between program sessions.
-//     • Borrowing Rules:
-//         • Students and faculty can borrow books based on their role constraints.
-//         • If a user tries to borrow more than the allowed number of books, the system should
-//         deny the request.
-//         • If a user has unpaid fines, borrowing new books should not be allowed until the fines
-//         are cleared.
-//         • The system should provide an option for users to simulate payment of fines.
-//         • Users can view their total outstanding fines and mark them as paid through a dedicated menu option.
-//         • Once the payment is made, the fine amount should reset to zero, and borrowing
-//         restrictions should be lifted.
-//         • Returning and Updating Rules:
-//     • Update Book Status:
-//         Upon the return of a book, its status should be updated to “Available” in the system.
-//         • Fine Calculation:
-//             ∗ For Students:
-//                 Fine = Days Overdue × 10 rupees/day.
-//             ∗ For Faculty:
-//                 · No fine for overdue books.
-//                 · Faculty members cannot borrow additional books if they (a) Have already reached
-//                 the limit of 5 borrowed books, or (b) Have an overdue book for more than 60
-//                 days.
-//     • Overdue Check:
-//         If the book is returned after the borrowing period (15 days for students, 30 days for
-//         faculty), the system should:
-//             ∗ Calculate the overdue period.
-//             ∗ Display to User Side
-//     • User Account Update:
-//         ∗ Remove the book from the current borrow list in the user’s account.
-//         ∗ Add the book to the borrowing history.
-//     • Borrowing Eligibility:
-//         ∗ If fines exist, prevent further borrowing until the fine is cleared.
-
-
-
-#include <bits/stdc++.h>
+#include<bits/stdc++.h>
+#include "classes.h"
 using namespace std;
 
-
+void studentLoginPage(){
+    cout << "Welcome to the student login page" << endl;
+    cout << "Enter your student ID: ";
+    string studentID;
+    cin >> studentID;
+    if (library.studentMap.find(studentID) == library.studentMap.end()){
+        cout << "Student not found" << endl;
+        studentLoginPage();
+        return;
+    }
+    Student student = library.studentMap[studentID];
+    studentHomePage(student);
+}
+void studentHomePage(Student student){
+    cout << "Welcome " << student.getName() << endl;
+    cout << "What do you want to do?" << endl;
+    int i1 = printMenu({"Borrow a book", "Return a book", "Reserve a book", "Unreserve a book", "View history", "Pay Fine", "View All books", "Go back"});
+    switch(i1){
+        case 1:
+            student.borrowBook();
+            studentHomePage(student);
+            break;
+        case 2:
+            student.returnBook();
+            studentHomePage(student);
+            break;
+        case 3:
+            student.reserveBook();
+            studentHomePage(student);
+            break;
+        case 4:
+            student.unreserveBook();
+            studentHomePage(student);
+            break;
+        case 5:
+            student.account.viewHistory();
+            studentHomePage(student);
+            break;
+        case 6:
+            library.students.erase(student);
+            student.account.payFine();
+            library.students.insert(student);
+            library.studentMap[student.getUserID()] = student;
+            studentHomePage(student);
+            break;
+        case 7:
+            library.viewAllBooks();
+            studentHomePage(student);
+            break;
+        case 8:
+            return;
+        default:
+            cout << "Invalid choice" << endl;
+            studentHomePage(student);
+            break;
+    }
+}
+void facultyLoginPage(){
+    cout << "Welcome to the faculty login page" << endl;
+    cout << "Enter your faculty ID: ";
+    string facultyID;
+    cin >> facultyID;
+    if (library.facultyMap.find(facultyID) == library.facultyMap.end()){
+        cout << "Faculty not found" << endl;
+        facultyLoginPage();
+        return;
+    }
+    Faculty faculty = library.facultyMap[facultyID];
+    facultyHomePage(faculty);
+}
+void facultyHomePage(Faculty& faculty){
+    cout << "Welcome to the faculty home page" << endl;
+    cout << "Please select an option: " << endl;
+    int i2 = printMenu({"Borrow a book", "Return a book", "Reserve a book", "Unreserve a book", "View history", "View All Books", "Go back"});
+    switch (i2){
+        case 1:
+            faculty.borrowBook();
+            facultyHomePage(faculty);
+            break;
+        case 2:
+            faculty.returnBook();
+            facultyHomePage(faculty);
+            break;
+        case 3:
+            faculty.reserveBook();
+            facultyHomePage(faculty);
+            break;
+        case 4:
+            faculty.unreserveBook();
+            facultyHomePage(faculty);
+            break;
+        case 5:
+            faculty.account.viewHistory();
+            facultyHomePage(faculty);
+            break;
+        case 6:
+            library.viewAllBooks();
+            facultyHomePage(faculty);
+            break;
+        case 7:
+            return;
+        default:
+            cout << "Invalid choice" << endl;
+            facultyHomePage(faculty);
+            break;
+    }
+}
+void librarianLoginPage(){
+    cout << "Welcome to the librarian login page" << endl;
+    cout << "Enter your librarian ID: ";
+    string librarianID;
+    cin >> librarianID;
+    if (library.librarianMap.find(librarianID) == library.librarianMap.end()){
+        cout << "Faculty not found" << endl;
+        librarianLoginPage();
+        return;
+    }
+    Librarian librarian = library.librarianMap[librarianID];
+    librarianHomePage(librarian);
+}
+void librarianHomePage(Librarian librarian){
+    cout << "Welcome to the librarian home page" << endl;
+    cout << "Please select an option: " << endl;
+    int i3 = printMenu({"Create a new student", "Create a new faculty", "Create a new librarian", "Create a new book",
+        "Remove a student", "Remove a faculty", "Remove a librarian", "Remove a book", "Update a student", "Update a faculty",
+        "Update a librarian", "Update a book", "View history", "View all Books", "View all students", "View all faculty", "View all librarians", "Go back"});
+    switch(i3){
+        case 1:
+            librarian.addStudent();
+            librarianHomePage(librarian);
+            break;
+        case 2:
+            librarian.addFaculty();
+            librarianHomePage(librarian);
+            break;
+        case 3:
+            librarian.addLibrarian();
+            librarianHomePage(librarian);
+            break;
+        case 4:
+            librarian.addBook();
+            librarianHomePage(librarian);
+            break;
+        case 5:
+            librarian.removeStudent();
+            librarianHomePage(librarian);
+            break;
+        case 6:
+            librarian.removeFaculty();
+            librarianHomePage(librarian);
+            break;
+        case 7:
+            librarian.removeLibrarian();
+            librarianHomePage(librarian);
+            break;
+        case 8:
+            librarian.removeBook();
+            librarianHomePage(librarian);
+            break;
+        case 9:
+            librarian.updateStudent();
+            librarianHomePage(librarian);
+            break;
+        case 10:
+            librarian.updateFaculty();
+            librarianHomePage(librarian);
+            break;
+        case 11:
+            librarian.updateLibrarian();
+            librarianHomePage(librarian);
+            break;
+        case 12:
+            librarian.updateBook();
+            librarianHomePage(librarian);
+            break;
+        case 13:
+            librarian.account.viewHistory();
+            librarianHomePage(librarian);
+            break;
+        case 14:
+            library.viewAllBooks();
+            librarianHomePage(librarian);
+            break;
+        case 15:
+            library.viewStudents();
+            librarianHomePage(librarian);
+            break;
+        case 16:
+            library.viewFaculties();
+            librarianHomePage(librarian);
+            break;
+        case 17:
+            library.viewLibrarians();
+            librarianHomePage(librarian);
+            break;
+        case 18:
+            return;
+    }
+}
 
 int main(){
-
+    cout << "Hello welcome to the library management system" << endl;
+    cout << "Please select your role: " << endl;
+    int x = printMenu({"Student", "Faculty", "Librarian"});
+    if (x == 1){
+        studentLoginPage();
+    }
+    else if (x == 2){
+        facultyLoginPage();
+    }
+    else if (x == 3){
+        librarianLoginPage();
+    }
     return 0;
 }

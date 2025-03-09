@@ -7,12 +7,11 @@ using namespace std;
 // 1 day = 86400 seconds
 // 1 minute = 60 seconds
 
-// TODO:
-// Make the main function and input validation.
-
 // If time left TODO:
 // Privatize data structures
 // Make a verification function for the librarian to verify weather the book is actually returned or weather the fine is actually paid.
+// seperate the classes.h into seperate files.
+// Make the UI better.
 
 int timeUnit = 86400; // 1 day
 
@@ -252,6 +251,7 @@ class Library {
         map<string, Librarian> librarianMap;
         
         Library();
+        void viewAllBooks();
         void viewAvailableBooks();
         void viewReservableBooks();
         void viewStudents();
@@ -407,7 +407,7 @@ Account::Account(string userID) : userID(userID), fine(0), overdueBooks(0) {
 void Account::checkReservedBooks(){
     cout << "These are the books which you had reserved and are now available: " << endl;
     for (Book book : reservedBooks){
-        if (book.getStatus() == "Reserved"){
+        if (book.getStatus() == "Reserved" && book.getReserverID() == userID){
             book.printBook();
         }
     }
@@ -429,9 +429,25 @@ void Account::calcFine(){
 }
 
 void Account::payFine(){
-    History history("Fine Paid");
-    this->history.push_back(history);
-    fine = 0;   
+    calcFine();
+    cout << "You have a fine of " << fine << " rupees, do you want to pay it? (Y/N): ";
+    char choice;
+    cin >> choice;
+    if (choice == 'Y' || choice == 'y'){
+        cout << "Fine paid successfully!" << endl;
+        fine = 0;
+        History history("Fine Paid");
+        this->history.push_back(history);
+    }
+    else if (choice == 'N' || choice == 'n'){
+        cout << "Fine not paid :(" << endl;
+        return;
+    }
+    else{
+        cout << "Invalid choice. Please try again" << endl;
+        payFine();
+    }
+
 }
 
 void Account::viewHistory(){
@@ -487,11 +503,24 @@ void User::returnBook() {
     for (auto book : this->account.borrowedBooks) {
         book.printBook();
     }
-    cout << "Enter the ISBN of the book you want to return: ";
+    cout << "Enter the ISBN of the book you want to return or enter 0 to go back: ";
     cin.ignore();
     string ISBN;
     getline(cin, ISBN);
 
+    if (ISBN == "0"){
+        return;
+    }
+
+    if (library.bookMap.find(ISBN) == library.bookMap.end()) {
+        cout << "Invalid ISBN, Please try again" << endl;
+        returnBook();
+        return;
+    }
+
+    if (this->account.borrowedBooks.find(library.bookMap[ISBN]) == this->account.borrowedBooks.end()) {
+        cout << "You did not borrow this book, Please try again" << endl;
+    }
     Book book = library.bookMap[ISBN];
     this->account.borrowedBooks.erase(book);
     library.books.erase(book);
@@ -503,20 +532,35 @@ void User::returnBook() {
 
     History history("Returned Book", book.getTitle(), book.getISBN());
     this->account.history.push_back(history);
+
+    cout << "Book returned successfully" << endl;
 }
 
 void User::reserveBook() {
     if (this->account.reservedBooks.size() >= 3) {
-        cout << "Cannot reserve more than 3 books" << endl;
+        cout << "Cannot reserve more than 3 books, Please unreserve and come back!" << endl;
         return;
     }
     cout << "Here are the books which are not available currently and can be reserved: " << endl;
     library.viewReservableBooks();
-    cout << "Enter the ISBN of the book you want to reserve: ";
+    cout << "Enter the ISBN of the book you want to reserve or enter 0 to go back: ";
     cin.ignore();
     string ISBN;
     getline(cin, ISBN);
-
+    if (ISBN == "0") {
+        return;
+    }
+    if (library.bookMap.find(ISBN) == library.bookMap.end()) {
+        cout << "Invalid ISBN, Please try again" << endl;
+        reserveBook();
+        return;
+    }
+    // check if the status of the book is borrowed and not reserved
+    if (!(library.bookMap[ISBN].getStatus() == "Borrowed" && !library.bookMap[ISBN].isReserved())) {
+        cout << "This book is not available for reservation, Please put one of the books in the list above" << endl;
+        reserveBook();
+        return;
+    }
     Book book = library.bookMap[ISBN];
     library.books.erase(book);
 
@@ -529,6 +573,8 @@ void User::reserveBook() {
     cout << "Book reserved successfully, you will be notified when it becomes available." << endl;
     History history("Reserved Book", book.getTitle(), book.getISBN());
     this->account.history.push_back(history);
+
+    cout << "Book reserved successfully" << endl;
 }
 
 void User::unreserveBook() {
@@ -536,11 +582,23 @@ void User::unreserveBook() {
     for (auto book : this->account.reservedBooks) {
         book.printBook();
     }
-    cout << "Enter the ISBN of the book you want to unreserve: ";
+    cout << "Enter the ISBN of the book you want to unreserve or enter 0 to go back: ";
     cin.ignore();
     string ISBN;
     getline(cin, ISBN);
-
+    if (ISBN == "0") {
+        return;
+    }
+    if (library.bookMap.find(ISBN) == library.bookMap.end()) {
+        cout << "Invalid ISBN, Please try again" << endl;
+        reserveBook();
+        return;
+    }
+    if (this->account.reservedBooks.find(library.bookMap[ISBN]) == this->account.reservedBooks.end()) {
+        cout << "You have not reserved this book, Please enter one of the books from the list above." << endl;
+        reserveBook();
+        return;
+    }
     Book book = library.bookMap[ISBN];
     library.books.erase(book);
     this->account.reservedBooks.erase(book);
@@ -549,6 +607,8 @@ void User::unreserveBook() {
 
     library.bookMap[ISBN] = book;
     library.books.insert(book);
+
+    cout << "Book unreserved successfully" << endl;
 }
 
 User::~User() {
@@ -577,11 +637,23 @@ void Student::borrowBook() {
     library.viewAvailableBooks();
     // Display the books which were reserved by the user and are now available.
     this->account.checkReservedBooks();
-    cout << "Enter the ISBN of the book you want to borrow: ";
+    cout << "Enter the ISBN of the book you want to borrow or enter 0 to go back: ";
     cin.ignore();
     string ISBN;
     getline(cin, ISBN);
-
+    if (ISBN == "0") {
+        return;
+    }
+    if (library.bookMap.find(ISBN) == library.bookMap.end()) {
+        cout << "Book not found" << endl;
+        borrowBook();
+        return;
+    }
+    if (!(library.bookMap[ISBN].getStatus() == "Available" || (library.bookMap[ISBN].getStatus() == "Reserved" && library.bookMap[ISBN].getReserverID() == this->getUserID()))) { 
+        cout << "Book is already borrowed or reserved, Please enter one of the books from the list above" << endl;
+        borrowBook();
+        return;
+    }
     Book book = library.bookMap[ISBN];
     library.books.erase(book);
     
@@ -593,6 +665,7 @@ void Student::borrowBook() {
 
     History history("Borrowed Book", book.getTitle(), book.getISBN());
     this->account.history.push_back(history);
+    cout << "Successfully borrowed the book " << book.getTitle() << endl;
 }
 
 Student::~Student() {
@@ -624,10 +697,23 @@ void Faculty::borrowBook() {
     cout << "Here are the available books: " << endl;
     library.viewAvailableBooks();
     this->account.checkReservedBooks();
-    cout << "Enter the ISBN of the book you want to borrow: ";
+    cout << "Enter the ISBN of the book you want to borrow or enter 0 if you wanna go back: ";
     cin.ignore();
     string ISBN;
     getline(cin, ISBN);
+    if (ISBN == "0") {
+        return;
+    }
+    if (library.bookMap.find(ISBN) == library.bookMap.end()) {
+        cout << "Book not found" << endl;
+        borrowBook();
+        return;
+    }
+    if (!(library.bookMap[ISBN].getStatus() == "Available" || (library.bookMap[ISBN].getStatus() == "Reserved" && library.bookMap[ISBN].getReserverID() == this->getUserID()))) { 
+        cout << "Book is already borrowed or reserved, Please enter one of the books from the list above" << endl;
+        borrowBook();
+        return;
+    }
     Book book = library.bookMap[ISBN];
     library.books.erase(book);
 
@@ -656,11 +742,19 @@ Librarian::Librarian(string name, string userID) : User(name, userID, "Librarian
 
 // Add a new book (status set to Available by default)
 void Librarian::addBook() {
+    cout << "Creating a new Book" << endl;
     string ISBN, title, author, publisher, status;
     int year;
-    cout << "Enter Book ISBN: ";
+    cout << "Enter Book ISBN or enter 0 to go back: ";
     cin >> ISBN;
-
+    if (ISBN == "0") {
+        return;
+    }
+    if (library.bookMap.find(ISBN) != library.bookMap.end()) {
+        cout << "Book with this ISBN already exists, Please try again." << endl;
+        addBook();
+        return;
+    }
     cin.ignore(); 
     cout << "Enter Book Title: ";
     getline(cin, title); 
@@ -683,12 +777,21 @@ void Librarian::addBook() {
 }
 
 void Librarian::addStudent() {
+    cout << "Creating a new Student" << endl;
     string name, userID;
     cin.ignore();
+    cout << "Enter Student ID or enter 0 to go back: " << endl;
+    cin >> userID;
+    if (userID == "0") {
+        return;
+    }
+    if (library.studentMap.find(userID) != library.studentMap.end()) {
+        cout << "Student with this ID already exists, Please try again." << endl;
+        addStudent();
+        return;
+    }
     cout << "Enter Student Name: " << endl;
     getline(cin, name);
-    cout << "Enter Student ID: " << endl;
-    cin >> userID;
     Student student(name, userID);
     library.students.insert(student);
     library.studentMap[userID] = student;
@@ -699,10 +802,18 @@ void Librarian::addStudent() {
 void Librarian::addFaculty() {
     string name, userID;
     cin.ignore();
+    cout << "Enter Faculty ID or enter 0 to go back: " << endl;
+    cin >> userID;
+    if (userID == "0") {
+        return;
+    }
+    if (library.facultyMap.find(userID) != library.facultyMap.end()) {
+        cout << "Faculty with this ID already exists, Please try again." << endl;
+        addFaculty();
+        return;
+    }
     cout << "Enter Faculty Name: " << endl;
     getline(cin, name);
-    cout << "Enter Faculty ID: " << endl;
-    cin >> userID;
     Faculty faculty(name, userID);
     library.faculties.insert(faculty);
     library.facultyMap[userID] = faculty;
@@ -713,10 +824,18 @@ void Librarian::addFaculty() {
 void Librarian::addLibrarian() {
     string name, userID;
     cin.ignore();
-    cout << "Enter Librarian Name: " << endl;
-    getline(cin, name);
     cout << "Enter Librarian ID: " << endl;
     cin >> userID;
+    if (userID == "0") {
+        return;
+    }
+    if (library.librarianMap.find(userID) != library.librarianMap.end()) {
+        cout << "Librarian with this ID already exists, Please try again." << endl;
+        addLibrarian();
+        return;
+    }
+    cout << "Enter Librarian Name: " << endl;
+    getline(cin, name);
     Librarian librarian(name, userID);
     library.librarians.insert(librarian);
     library.librarianMap[userID] = librarian;
@@ -726,8 +845,16 @@ void Librarian::addLibrarian() {
 
 void Librarian::removeBook() {
     string ISBN;
-    cout << "Enter Book ISBN: ";
+    cout << "Enter Book ISBN or enter 0 to go back: ";
     cin >> ISBN;
+    if (ISBN == "0") {
+        return;
+    }
+    if (library.bookMap.find(ISBN) == library.bookMap.end()) {
+        cout << "Book with this ISBN does not exist, Please try again." << endl;
+        removeBook();
+        return;
+    }
     // Erase the book from the library collections.
     library.books.erase(library.bookMap[ISBN]);
     library.bookMap.erase(ISBN);
@@ -737,8 +864,16 @@ void Librarian::removeBook() {
 
 void Librarian::removeStudent() {
     string userID;
-    cout << "Enter Student ID: ";
+    cout << "Enter Student ID or enter 0 to go back: ";
     cin >> userID;
+    if (userID == "0") {
+        return;
+    }
+    if (library.studentMap.find(userID) == library.studentMap.end()) {
+        cout << "Student with this ID does not exist, Please try again." << endl;
+        removeStudent();
+        return;
+    }
     library.students.erase(library.studentMap[userID]);
     library.studentMap.erase(userID);
     History history("Deleted Student", library.studentMap[userID].getName(), userID);
@@ -747,8 +882,16 @@ void Librarian::removeStudent() {
 
 void Librarian::removeFaculty() {
     string userID;
-    cout << "Enter Faculty ID: ";
+    cout << "Enter Faculty ID or enter 0 to go back: ";
     cin >> userID;
+    if (userID == "0") {
+        return;
+    }
+    if (library.facultyMap.find(userID) == library.facultyMap.end()) {
+        cout << "Faculty with this ID does not exist, Please try again." << endl;
+        removeFaculty();
+        return;
+    }
     library.faculties.erase(library.facultyMap[userID]);
     library.facultyMap.erase(userID);
     History history("Deleted Faculty", library.facultyMap[userID].getName(), userID);
@@ -757,8 +900,16 @@ void Librarian::removeFaculty() {
 
 void Librarian::removeLibrarian() {
     string userID;
-    cout << "Enter Librarian ID: ";
+    cout << "Enter Librarian ID or enter 0 to go back: ";
     cin >> userID;
+    if (userID == "0") {
+        return;
+    }
+    if (library.librarianMap.find(userID) == library.librarianMap.end()) {
+        cout << "Librarian with this ID does not exist, Please try again." << endl;
+        removeLibrarian();
+        return;
+    }
     if (userID == "L0001") {
         cout << "Cannot delete root librarian" << endl;
         return;
@@ -775,8 +926,16 @@ void Librarian::removeLibrarian() {
 
 void Librarian::updateBook() {
     string ISBN;
-    cout << "Enter Book ISBN: ";
+    cout << "Enter Book ISBN or enter 0 to go back: ";
     cin >> ISBN;
+    if (ISBN == "0") {
+        return;
+    }
+    if (library.bookMap.find(ISBN) == library.bookMap.end()) {
+        cout << "Book with this ISBN does not exist, Please try again." << endl;
+        updateBook();
+        return;
+    }
     Book book = library.bookMap[ISBN];
     library.books.erase(book);
     cout << "Enter the field you want to update: " << endl;
@@ -828,8 +987,16 @@ void Librarian::updateBook() {
 
 void Librarian::updateStudent() {
     string userID;
-    cout << "Enter Student ID: ";
+    cout << "Enter Student ID or enter 0 to go back: ";
     cin >> userID;
+    if (userID == "0") {
+        return;
+    }
+    if (library.studentMap.find(userID) == library.studentMap.end()) {
+        cout << "Student with this ID does not exist, Please try again." << endl;
+        updateStudent();
+        return;
+    }
     Student student = library.studentMap[userID];
     library.students.erase(student);
     cout << "Enter the field you want to update: " << endl;
@@ -856,8 +1023,14 @@ void Librarian::updateStudent() {
 
 void Librarian::updateFaculty() {
     string userID;
-    cout << "Enter Faculty ID: ";
+    cout << "Enter Faculty ID or enter 0 to go back: ";
     cin >> userID;
+    if(userID == "0") return;
+    if(library.facultyMap.find(userID) == library.facultyMap.end()) {
+        cout << "Faculty with this ID does not exist, Please try again." << endl;
+        updateFaculty();
+        return;
+    }
     Faculty faculty = library.facultyMap[userID];
     library.faculties.erase(faculty);
     cout << "Enter the field you want to update: " << endl;
@@ -884,8 +1057,16 @@ void Librarian::updateFaculty() {
 
 void Librarian::updateLibrarian() {
     string userID;
-    cout << "Enter Librarian ID: ";
+    cout << "Enter Librarian ID or enter 0 to go back: ";
     cin >> userID;
+    if (userID == "0") {
+        return;
+    }
+    if (library.librarianMap.find(userID) == library.librarianMap.end()) {
+        cout << "Librarian with this ID does not exist, Please try again." << endl;
+        updateLibrarian();
+        return;
+    }
     if (userID == "L0001") {
         cout << "Cannot update root librarian" << endl;
         return;
@@ -1155,7 +1336,11 @@ Library::Library() {
     readFromFaculties("files\\Users\\faculty.csv");
     readFromLibrarians("files\\Users\\librarians.csv");
 }
-
+void Library::viewAllBooks(){
+    for (auto book : books){
+        book.printBook();
+    }
+}
 void Library::viewAvailableBooks() {
     time_t currentTime = std::time(0);
     vector<Book> updatedBooks;
