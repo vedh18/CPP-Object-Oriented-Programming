@@ -13,6 +13,14 @@ using namespace std;
 // Lets say we have a unit of time in terms of seconds.
 // 1 day = 86400 seconds
 // 1 minute = 60 seconds
+
+// TODO:
+// Make the main function and input validation.
+
+// If time left TODO:
+// Privatize data structures
+// Make a verification function for the librarian to verify weather the book is actually returned or weather the fine is actually paid.
+
 int timeUnit = 86400; // 1 day
 
 int printMenu(vector<string> menu){
@@ -50,23 +58,8 @@ std::string timeToDateString(time_t t) {
     oss << std::put_time(tm_ptr, "%d %b %Y %H:%M:%S");
     return oss.str();
 }
-// TODO: Use private attributes, and also validate input wherever we are recieving the input.
 class Library{
-    public:
-        set<Book> books;
-        set<Student> students;
-        set<Faculty> faculties;
-        set<Librarian> librarians;
-        map<string, Book> bookMap;
-        map<string, Student> studentMap;
-        map<string, Faculty> facultyMap;
-        map<string, Librarian> librarianMap;
-        Library(){
-            readFromBooks("files\\books.csv");
-            readFromStudents("files\\Users\\students.csv");
-            readFromFaculties("files\\Users\\faculties.csv");
-            readFromLibrarians("files\\Users\\librarians.csv");
-        }
+    private:
         void readFromBooks(string file_path){
             ifstream file(file_path);
             if (!file.is_open()) {
@@ -87,18 +80,18 @@ class Library{
                 while (getline(lineStream, cell, ',')) {
                     row.push_back(cell);
                 }
-                book.ISBN = row[0];
-                book.title = row[1];
-                book.author = row[2];
-                book.publisher = row[3];
-                book.year = stoi(row[4]);
-                book.status = row[5];
-                book.borrowerID = row[6];
-                book.borrowedTime = convertDateString(row[7]);
-                book.reserved = (row[8] == "1" ? true : false);
-                book.reserverID = row[9];
+                book.updateISBN(row[0]);
+                book.updateTitle(row[1]);
+                book.updateAuthor(row[2]);
+                book.updatePublisher(row[3]);
+                book.updateYear(stoi(row[4]));
+                book.updateStatus(row[5]);
+                book.updateBorrowerID(row[6]);
+                book.updateBorrowedTime(convertDateString(row[7]));
+                book.updateReserved(row[8] == "1");
+                book.updateReserverID(row[9]);
                 books.insert(book);
-                bookMap[book.ISBN] = book;
+                bookMap[book.getISBN()] = book;
             }
             file.close();
         }
@@ -123,8 +116,9 @@ class Library{
                     row.push_back(cell);
                 }
                 // userID,Student Name,Book 1,Issued Date,Book 2,Issued Date,Book 3,Issued Date,Reserved Books (ID)
-                student.userID = row[0];
-                student.name = row[1];
+                student.updateUserID(row[0]);
+                // student.name = row[1];
+                student.updateName(row[1]);
                 student.account.borrowedBooks.insert(bookMap[row[2]]);
                 student.account.borrowedBooks.insert(bookMap[row[4]]);
                 student.account.borrowedBooks.insert(bookMap[row[6]]);
@@ -133,7 +127,7 @@ class Library{
                     student.account.reservedBooks.insert(bookMap[reservedBookID]);
                 }
                 students.insert(student);
-                studentMap[student.userID] = student;
+                studentMap[student.getUserID()] = student;
             }
             file.close();
         }
@@ -158,8 +152,8 @@ class Library{
                 while (getline(lineStream, cell, ',')) {
                     row.push_back(cell);
                 }
-                faculty.userID = row[0];
-                faculty.name = row[1];
+                faculty.updateUserID(row[0]);
+                faculty.updateName(row[1]);
                 faculty.account.borrowedBooks.insert(bookMap[row[2]]);
                 faculty.account.borrowedBooks.insert(bookMap[row[4]]);
                 faculty.account.borrowedBooks.insert(bookMap[row[6]]);
@@ -170,7 +164,7 @@ class Library{
                     faculty.account.reservedBooks.insert(bookMap[reservedBookID]);
                 }
                 faculties.insert(faculty);
-                facultyMap[faculty.userID] = faculty;
+                facultyMap[faculty.getUserID()] = faculty;
             }
             file.close();
         }
@@ -195,44 +189,150 @@ class Library{
                 while (getline(lineStream, cell, ',')) {
                     row.push_back(cell);
                 }
-                librarian.userID = row[0];
-                librarian.name = row[1];
+                librarian.updateUserID(row[0]);
+                librarian.updateName(row[1]);
                 librarians.insert(librarian);
-                librarianMap[librarian.userID] = librarian;
+                librarianMap[librarian.getUserID()] = librarian;
             }
             file.close();
         }
+        // All the books from the books set should be written to the books.csv file.
+        void writeToBooks(string filename){
+            ofstream file(filename);
+            if (!file.is_open()) {
+                cerr << "Error opening file" << endl;
+                return;
+            }
+            for (auto book : books) {
+                file << book.getISBN() << ","
+                     << book.getTitle() << ","
+                     << book.getAuthor() << ","
+                     << book.getPublisher() << ","
+                     << book.getYear() << ","
+                     << book.getStatus() << ","
+                     << book.getBorrowerID() << ","
+                     << timeToDateString(book.getBorrowedTime()) << ","
+                     << (book.isReserved() ? "1" : "0") << ","
+                     << book.getReserverID() << endl;
+            }
+            file.close();
+        }
+        // Format: userID,Student Name,Book 1,Issued Date,Book 2,Issued Date,Book 3,Issued Date,Reserved Books (ID)
+        void writeToStudents(string filename){
+            ofstream file(filename);
+            if (!file.is_open()){
+                cerr << "Error opening file" << endl;
+                return;
+            }
+            for (auto student : students){
+                file << student.getUserID() << "," << student.getName() << ",";
+                int i = 0;
+                for (auto book : student.account.borrowedBooks){
+                    file << book.getISBN() << "," << timeToDateString(book.getBorrowedTime());
+                    if (i < 2){
+                        file << ",";
+                    }
+                    i++;
+                }
+                file << ",";
+                i = 0;
+                for (auto book : student.account.reservedBooks){
+                    file << book.getISBN();
+                    if (i < student.account.reservedBooks.size() - 1){
+                        file << ":";
+                    }
+                    i++;
+                }
+                file << endl;
+            }
+            file.close();
+        }
+        // Format: userID,Name,Book 1 (ID),Book 1 Issue Date, ... ,Reserved Books (IDs)
+        void writeToFaculties(string filepath){
+            ofstream file(filepath);
+            if (!file.is_open()){
+                cerr << "Error opening file" << endl;
+                return;
+            }
+            for (auto faculty : faculties){
+                file << faculty.getUserID() << "," << faculty.getName() << ",";
+                int i = 0;
+                for (auto book : faculty.account.borrowedBooks){
+                    file << book.getISBN() << "," << timeToDateString(book.getBorrowedTime());
+                    if (i < 4){
+                        file << ",";
+                    }
+                    i++;
+                }
+                file << ",";
+                i = 0;
+                for (auto book : faculty.account.reservedBooks){
+                    file << book.getISBN();
+                    if (i < faculty.account.reservedBooks.size() - 1){
+                        file << ":";
+                    }
+                    i++;
+                }
+                file << endl;
+            }
+            file.close();
+        }
+        void writeToLibrarians(string filepath){
+            ofstream file(filepath);
+            if (!file.is_open()) {
+                cerr << "Error opening file" << endl;
+                return;
+            }
+            for (auto librarian : librarians){
+                file << librarian.getUserID() << "," << librarian.getName() << endl;
+            }
+            file.close();
+        }
+    public:
+        set<Book> books;
+        set<Student> students;
+        set<Faculty> faculties;
+        set<Librarian> librarians;
+        map<string, Book> bookMap;
+        map<string, Student> studentMap;
+        map<string, Faculty> facultyMap;
+        map<string, Librarian> librarianMap;
+        Library(){
+            readFromBooks("files\\books.csv");
+            readFromStudents("files\\Users\\students.csv");
+            readFromFaculties("files\\Users\\faculties.csv");
+            readFromLibrarians("files\\Users\\librarians.csv");
+        }
         void viewAvailableBooks() {
             time_t currentTime = std::time(0);
-            // Temporary container to hold the updated books.
             std::vector<Book> updatedBooks;
             
-            for (auto book : books) {  // iterate by value (copy)
-                if (book.reserved) {
-                    int days = (currentTime - book.reservedTime) / timeUnit;
+            for (auto book : books) {  // Iterate by value (copy)
+                if (book.isReserved()) {
+                    int days = (currentTime - book.getReservedTime()) / timeUnit;
                     if (days > 5) {
-                        book.status = "Available";
-                        book.reserved = false;
-                        book.reservedTime = 0;
-                        book.reserverID = "";
-                        bookMap[book.ISBN] = book; // update in the map
+                        book.updateStatus("Available");
+                        book.updateReserved(false);
+                        book.updateReservedTime(0);
+                        book.updateReserverID("");
+                        bookMap[book.getISBN()] = book; // Update in the map
                     }
                 }
-                if (book.status == "Available") {
+                if (book.getStatus() == "Available") {
                     book.printBook();
                 }
                 updatedBooks.push_back(book);
             }
             
-            // Clear the original set and reinsert the updated books.
             books.clear();
             for (auto &book : updatedBooks) {
                 books.insert(book);
             }
         }
+        
         void viewReservableBooks(){
             for(auto book : books){
-                if (book.status == "Borrowed" && book.reserved == false){
+                if (book.getStatus() == "Borrowed" && book.isReserved() == false){
                     book.printBook();
                 }
             }
@@ -258,99 +358,18 @@ class Library{
             writeToFaculties("files\\Users\\faculties.csv");
             writeToLibrarians("files\\Users\\librarians.csv");
         }
-        // All the books from the books set should be written to the books.csv file.
-        void writeToBooks(string filename){
-            ofstream file(filename);
-            if (!file.is_open()) {
-                cerr << "Error opening file" << endl;
-                return;
-            }
-            for (auto book : books){
-                file << book.ISBN << "," << book.title << "," << book.author << "," << book.publisher << "," << book.year << "," << book.status << "," << book.borrowerID << "," << timeToDateString(book.borrowedTime) << "," << book.reserved << "," << book.reserverID << endl;
-            }
-            file.close();
-        }
-        // userID,Student Name,Book 1,Issued Date,Book 2,Issued Date,Book 3,Issued Date,Reserved Books (ID)
-        void writeToStudents(string filename){
-            ofstream file(filename);
-            if (!file.is_open()) {
-                cerr << "Error opening file" << endl;
-                return;
-            }
-            for (auto student : students){
-                file << student.userID << "," << student.name << ",";
-                int i = 0;
-                for (auto book : student.account.borrowedBooks){
-                    file << book.ISBN << "," << timeToDateString(book.borrowedTime);
-                    if (i < 2){
-                        file << ",";
-                    }
-                    i++;
-                }
-                file << ",";
-                i = 0;
-                for (auto book : student.account.reservedBooks){
-                    file << book.ISBN;
-                    if (i < student.account.reservedBooks.size() - 1){
-                        file << ":";
-                    }
-                    i++;
-                }
-                file << endl;
-            }
-            file.close();
-        }
-        void writeToFaculties(string filepath){
-            ofstream file(filepath);
-            if (!file.is_open()) {
-                cerr << "Error opening file" << endl;
-                return;
-            }
-            for (auto faculty : faculties){
-                file << faculty.userID << "," << faculty.name << ",";
-                int i = 0;
-                for (auto book : faculty.account.borrowedBooks){
-                    file << book.ISBN << "," << timeToDateString(book.borrowedTime);
-                    if (i < 4){
-                        file << ",";
-                    }
-                    i++;
-                }
-                file << ",";    
-                i = 0;
-                for (auto book : faculty.account.reservedBooks){
-                    file << book.ISBN;
-                    if (i < faculty.account.reservedBooks.size() - 1){
-                        file << ":";
-                    }
-                    i++;
-                }
-                file << endl;
-            }
-            file.close();
-        }
-        void writeToLibrarians(string filepath){
-            ofstream file(filepath);
-            if (!file.is_open()) {
-                cerr << "Error opening file" << endl;
-                return;
-            }
-            for (auto librarian : librarians){
-                file << librarian.userID << "," << librarian.name << endl;
-            }
-            file.close();
-        }
 }; 
 
 Library library;
 
 class History {
-    public:
+    private:
+        time_t time;
         string action; 
         // Borrowed, Returned, Reserved, Fine Paid, Created Book, Updated Book, Deleted Book, 
         // Created Student, Updated Student, Deleted Student, Created Faculty, Updated Faculty, Deleted Faculty, 
         // Created Librarian, Updated Librarian, Deleted Librarian.
-        time_t time;
+    public:
         History(string action){
             this->action = action;
             this->time = std::time(0);
@@ -370,9 +389,10 @@ class History {
         ~History(){}
 };
 class Account {
+    private:
+        string userID;
     public:
         string userType; // Student/Faculty/Librarian
-        string userID;
 
         set<Book> reservedBooks;
         set<Book> borrowedBooks;
@@ -381,7 +401,12 @@ class Account {
 
         int fine = 0;
         int overdueBooks = 0;
-
+        string getUserID(){
+            return this->userID;
+        }
+        void updateUserID(string newUserID){
+            this->userID = newUserID;
+        }
         Account(){}
         Account(string userID){
             this->userID = userID;
@@ -390,7 +415,7 @@ class Account {
         void checkReservedBooks(){
             cout << "These are the books which you had reserved and are now available: " << endl;
             for (auto book : reservedBooks){
-                if (book.status == "Reserved"){
+                if (book.getStatus() == "Reserved"){
                     book.printBook();
                 }
             }
@@ -398,7 +423,7 @@ class Account {
         void calcFine(){
             for (auto book : borrowedBooks){
                 time_t currentTime = std::time(0);
-                int days = (currentTime - book.borrowedTime) / timeUnit;
+                int days = (currentTime - book.getBorrowedTime()) / timeUnit;
                 if (userType == "Student"){
                     fine += days * 10;
                 }
@@ -422,16 +447,30 @@ class Account {
         ~Account(){}
 };
 class User {
-    public:
+    private:
         string name;
         string userID;
+    public:
         Account account; // Account class to handle user activity
         User(){}
         User(string name, string userID, string userType){
             this->name = name;
             this->userID = userID;
-            this->account.userID = userID;
+            this->account.updateUserID(userID);
             this->account.userType = userType;
+        }
+        string getUserID(){
+            return this->userID;
+        }
+        void updateUserID(string newUserID){
+            this->userID = newUserID;
+            this->account.updateUserID(newUserID);
+        }
+        string getName(){
+            return this->name;
+        }
+        void updateName(string newName){
+            this->name = newName;
         }
         void printUser(){
             cout << left;
@@ -462,7 +501,7 @@ class User {
             library.bookMap[ISBN] = book;
             library.books.insert(book);
 
-            History history("Returned Book", book.title, book.ISBN);
+            History history("Returned Book", book.getTitle(), book.getISBN());
             this->account.history.push_back(history);
         }
         void reserveBook(){
@@ -487,7 +526,7 @@ class User {
 
             this->account.reservedBooks.insert(book);
             cout << "Book reserved successfully, you will be notified when it becomes available." << endl;
-            History history("Reserved Book", book.title, book.ISBN);
+            History history("Reserved Book", book.getTitle(), book.getISBN());
             this->account.history.push_back(history);
         }
         void unreserveBook(){
@@ -544,7 +583,7 @@ class Student : public User {
             library.bookMap[ISBN] = book;
             library.books.insert(book);
 
-            History history("Borrowed Book", book.title, book.ISBN);
+            History history("Borrowed Book", book.getTitle(), book.getISBN());
             this->account.history.push_back(history);
         }
         ~Student(){}
@@ -578,7 +617,7 @@ class Librarian : public User {
             library.books.insert(book);
             library.bookMap[ISBN] = book;
 
-            History history("Created Book", book.title, book.ISBN);
+            History history("Created Book", book.getTitle(), book.getISBN());
             this->account.history.push_back(history);
         }
         void addStudent(){
@@ -591,7 +630,7 @@ class Librarian : public User {
             Student student(name, userID);
             library.students.insert(student);
             library.studentMap[userID] = student;
-            History history("Created Student", student.name, student.userID);
+            History history("Created Student", student.getName(), student.getUserID());
             this->account.history.push_back(history);
         }
         void addFaculty(){
@@ -604,7 +643,7 @@ class Librarian : public User {
             Faculty faculty(name, userID);
             library.faculties.insert(faculty);
             library.facultyMap[userID] = faculty;
-            History history("Created Faculty", faculty.name, faculty.userID);
+            History history("Created Faculty", faculty.getName(), faculty.getUserID());
             this->account.history.push_back(history);
         }
         void addLibrarian(){
@@ -617,7 +656,7 @@ class Librarian : public User {
             Librarian librarian(name, userID);
             library.librarians.insert(librarian);
             library.librarianMap[userID] = librarian;
-            History history("Created Librarian", librarian.name, librarian.userID);
+            History history("Created Librarian", librarian.getName(), librarian.getUserID());
             this->account.history.push_back(history);
         }
         void removeBook(){
@@ -655,7 +694,7 @@ class Librarian : public User {
                 cout << "Cannot delete root librarian" << endl;
                 return;
             }
-            if (userID == this->userID){
+            if (userID == this->getUserID()){
                 cout << "Cannot delete self" << endl;
                 return;
             }
@@ -664,7 +703,6 @@ class Librarian : public User {
             History history("Deleted Librarian", library.librarianMap[userID].name, userID);
             this->account.history.push_back(history);
         }
-        // TODO: If time permits give choice to update book status as well.
         void updateBook(){
             string ISBN;
             cout << "Enter Book ISBN: ";
@@ -675,34 +713,48 @@ class Librarian : public User {
             vector<string> menu = {"Title", "Author", "Publisher", "Year"};
             int choice = printMenu(menu);
             cout << "PS: You cannot change ISBN number of the book, for that please delete the existing book and add a new one." << endl;
-            switch(choice){
-                case 1:
+            switch(choice) {
+                case 1: {
                     cout << "Enter new title: ";
                     cin.ignore();
-                    getline(cin, book.title);
+                    string newTitle;
+                    getline(cin, newTitle);
+                    book.updateTitle(newTitle);
                     break;
-                case 2:
+                }
+                case 2: {
                     cout << "Enter new author: ";
                     cin.ignore();
-                    getline(cin, book.author);
+                    string newAuthor;
+                    getline(cin, newAuthor);
+                    book.updateAuthor(newAuthor);
                     break;
-                case 3:
+                }
+                case 3: {
                     cout << "Enter new publisher: ";
                     cin.ignore();
-                    getline(cin, book.publisher);
+                    string newPublisher;
+                    getline(cin, newPublisher);
+                    book.updatePublisher(newPublisher);
                     break;
-                case 4:
+                }
+                case 4: {
                     cout << "Enter new year: ";
-                    cin >> book.year;
+                    int newYear;
+                    cin >> newYear;
+                    book.updateYear(newYear);
                     break;
+                }
                 default:
                     cout << "Invalid choice" << endl;
                     break;
             }
+            
             library.books.insert(book);
-            library.bookMap[ISBN] = book;
-            History history("Updated Book", book.title, book.ISBN);
+            library.bookMap[book.getISBN()] = book;
+            History history("Updated Book", book.getTitle(), book.getISBN());
             this->account.history.push_back(history);
+            
         }
         void updateStudent(){
             string userID;
@@ -714,18 +766,21 @@ class Librarian : public User {
             vector<string> menu = {"Name"};
             int choice = printMenu(menu);
             switch(choice){
-                case 1:
+                case 1:{
                     cout << "Enter new name: ";
                     cin.ignore();
-                    getline(cin, student.name);
+                    string temp;
+                    getline(cin, temp);
+                    student.updateName(temp);
                     break;
+                }
                 default:
                     cout << "Invalid choice" << endl;
                     break;
             }
             library.students.insert(student);
             library.studentMap[userID] = student;
-            History history("Updated Student", student.name, student.userID);
+            History history("Updated Student", student.getName(), student.getUserID());
             this->account.history.push_back(history);
         }
         void updateFaculty(){
@@ -738,18 +793,21 @@ class Librarian : public User {
             vector<string> menu = {"Name"};
             int choice = printMenu(menu);
             switch(choice){
-                case 1:
+                case 1:{
                     cout << "Enter new name: ";
                     cin.ignore();
-                    getline(cin, faculty.name);
+                    string temp;
+                    getline(cin, temp);
+                    faculty.updateName(temp);
                     break;
+                }
                 default:
                     cout << "Invalid choice" << endl;
                     break;
             }
             library.faculties.insert(faculty);
             library.facultyMap[userID] = faculty;
-            History history("Updated Faculty", faculty.name, faculty.userID);
+            History history("Updated Faculty", faculty.getName(), faculty.getUserID());
             this->account.history.push_back(history);
         }
         void updateLibrarian(){
@@ -766,18 +824,21 @@ class Librarian : public User {
             vector<string> menu = {"Name"};
             int choice = printMenu(menu);
             switch(choice){
-                case 1:
+                case 1:{
                     cout << "Enter new name: ";
                     cin.ignore();
-                    getline(cin, librarian.name);
+                    string temp;
+                    getline(cin, temp);
+                    librarian.updateName(temp);
                     break;
+                }
                 default:
                     cout << "Invalid choice" << endl;
                     break;
             }
             library.librarians.insert(librarian);
             library.librarianMap[userID] = librarian;
-            History history("Updated Librarian", librarian.name, librarian.userID);
+            History history("Updated Librarian", librarian.getName(), librarian.getUserID());
             this->account.history.push_back(history);
         }
         ~Librarian(){}
@@ -813,7 +874,7 @@ class Faculty : public User {
             this->account.borrowedBooks.insert(book);
             library.bookMap[ISBN] = book;
             library.books.insert(book);
-            History history("Borrowed Book", book.title, book.ISBN);
+            History history("Borrowed Book", book.getTitle(), book.getISBN());
             this->account.history.push_back(history);
         }
         ~Faculty(){}
@@ -835,24 +896,47 @@ class Faculty : public User {
 //         • Start with at least 5 books in the system.
 //         • Books can only be borrowed if their status is ”Available.”
 class Book{
-    public:
-        // generic details
+    private:
+        // Generic details
         string ISBN;
         string title;
         string author;
         string publisher;
         int year;
 
-        // book status
-        string status; // Available, Borrowed, Reserved
-
+        // Book status details
+        string status; // "Available", "Borrowed", "Reserved"
         string borrowerID;
         time_t borrowedTime = 0;
-
         bool reserved = false;
         time_t reservedTime = 0;
         string reserverID;
+    public:
+         // Getter functions
+        std::string getISBN() const { return ISBN; }
+        std::string getTitle() const { return title; }
+        std::string getAuthor() const { return author; }
+        std::string getPublisher() const { return publisher; }
+        int getYear() const { return year; }
+        std::string getStatus() const { return status; }
+        std::string getBorrowerID() const { return borrowerID; }
+        time_t getBorrowedTime() const { return borrowedTime; }
+        bool isReserved() const { return reserved; }
+        time_t getReservedTime() const { return reservedTime; }
+        std::string getReserverID() const { return reserverID; }
 
+        // Updater (setter) functions
+        void updateISBN(const std::string &isbn) { ISBN = isbn; }
+        void updateTitle(const std::string &t) { title = t; }
+        void updateAuthor(const std::string &a) { author = a; }
+        void updatePublisher(const std::string &p) { publisher = p; }
+        void updateYear(int y) { year = y; }
+        void updateStatus(const std::string &s) { status = s; }
+        void updateBorrowerID(const std::string &id) { borrowerID = id; }
+        void updateBorrowedTime(time_t t) { borrowedTime = t; }
+        void updateReserved(bool r) { reserved = r; }
+        void updateReservedTime(time_t t) { reservedTime = t; }
+        void updateReserverID(const std::string &id) { reserverID = id; }
         Book(){}
         Book(string ISBN, string title, string author, string publisher, int year, string status){
             this->title = title;
