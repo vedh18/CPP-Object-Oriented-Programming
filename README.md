@@ -56,4 +56,11 @@ The LMS allows different user roles to interact with the library:
     .\main.exe
 7. Follow the prompts to interact with the Library Management System.
 
+## Improvements in the future:
+- Allow multiple copies of the same book(ISBN)
+- Privatize data structures
+- Make a verification function for the librarian to verify weather the book is actually returned or weather the fine is actually paid.
+- Seperate the classes.h into seperate files.
+- Make the UI better.
+
 
