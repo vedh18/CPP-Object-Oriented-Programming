@@ -327,7 +327,7 @@ Library library;
 class History {
     public:
         string action; 
-        // Borrowed, Returned, Reserved, Unreserved, Fine Paid, Created Book, Updated Book, Deleted Book, 
+        // Borrowed, Returned, Reserved, Fine Paid, Created Book, Updated Book, Deleted Book, 
         // Created Student, Updated Student, Deleted Student, Created Faculty, Updated Faculty, Deleted Faculty, 
         // Created Librarian, Updated Librarian, Deleted Librarian.
         time_t time;
@@ -335,10 +335,13 @@ class History {
             this->action = action;
             this->time = std::time(0);
         }
-        History(string action, string userID){
+        History(string action, string name, string ID){
             this->action = action;
             this->action += " ";
-            this->action += userID;
+            this->action += name;
+            this->action += "(";
+            this->action += ID;
+            this->action += ")";
             this->time = std::time(0);
         }
         void printHistory(){
@@ -383,7 +386,14 @@ class Account {
             }
         }
         void payFine(){
-            fine = 0;
+            History history("Fine Paid");
+            this->history.push_back(history);
+            fine = 0;   
+        }
+        void viewHistory(){
+            for (auto curr_history : history){
+                curr_history.printHistory();
+            }
         }
         ~Account(){}
 };
@@ -421,7 +431,10 @@ class User {
             Book book = library.bookMap[ISBN];
             book.returnBook(this->account.userType);
             this->account.borrowedBooks.erase(book);
+            History history("Returned Book", book.title, book.ISBN);
+            this->account.history.push_back(history);
         }
+        // TODO: If time permits, put a cap on the number of days the book can be reerved up to after the book becomes available.
         void reserveBook(){
             cout << "Here are the books which are not available currently and can be reserved: " << endl;
             library.viewReservableBooks();
@@ -433,11 +446,8 @@ class User {
             book.reseverBook(this->userID);
             this->account.reservedBooks.insert(book);
             cout << "Book reserved successfully, you will be notified when it becomes available." << endl;
-        }
-        void viewHistory(){
-            for (auto history : this->account.history){
-                history.printHistory();
-            }
+            History history("Reserved Book", book.title, book.ISBN);
+            this->account.history.push_back(history);
         }
         ~User(){}
     };
@@ -467,6 +477,8 @@ class Student : public User {
             Book book = library.bookMap[ISBN];
             book.borrowBook();
             this->account.borrowedBooks.insert(book);
+            History history("Borrowed Book", book.title, book.ISBN);
+            this->account.history.push_back(history);
         }
         ~Student(){}
 };
@@ -496,6 +508,9 @@ class Librarian : public User {
             getline(cin, status); 
             Book book(ISBN, title, author, publisher, year, status);
             library.books.insert(book);
+            library.bookMap[ISBN] = book;
+            History history("Created Book", book.title, book.ISBN);
+            this->account.history.push_back(history);
         }
         void addStudent(){
             string name, userID;
@@ -506,6 +521,9 @@ class Librarian : public User {
             cin >> userID;
             Student student(name, userID);
             library.students.insert(student);
+            library.studentMap[userID] = student;
+            History history("Created Student", student.name, student.userID);
+            this->account.history.push_back(history);
         }
         void addFaculty(){
             string name, userID;
@@ -516,6 +534,9 @@ class Librarian : public User {
             cin >> userID;
             Faculty faculty(name, userID);
             library.faculties.insert(faculty);
+            library.facultyMap[userID] = faculty;
+            History history("Created Faculty", faculty.name, faculty.userID);
+            this->account.history.push_back(history);
         }
         void addLibrarian(){
             string name, userID;
@@ -526,6 +547,9 @@ class Librarian : public User {
             cin >> userID;
             Librarian librarian(name, userID);
             library.librarians.insert(librarian);
+            library.librarianMap[userID] = librarian;
+            History history("Created Librarian", librarian.name, librarian.userID);
+            this->account.history.push_back(history);
         }
         void removeBook(){
             string ISBN;
@@ -533,6 +557,8 @@ class Librarian : public User {
             cin >> ISBN;
             library.books.erase(library.bookMap[ISBN]);
             library.bookMap.erase(ISBN);
+            History history("Deleted Book", library.bookMap[ISBN].title, ISBN);
+            this->account.history.push_back(history);
         }
         void removeStudent(){
             string userID;
@@ -540,6 +566,8 @@ class Librarian : public User {
             cin >> userID;
             library.students.erase(library.studentMap[userID]);
             library.studentMap.erase(userID);
+            History history("Deleted Student", library.studentMap[userID].name, userID);
+            this->account.history.push_back(history);
         }
         void removeFaculty(){
             string userID;
@@ -547,6 +575,8 @@ class Librarian : public User {
             cin >> userID;
             library.faculties.erase(library.facultyMap[userID]);
             library.facultyMap.erase(userID);
+            History history("Deleted Faculty", library.facultyMap[userID].name, userID);
+            this->account.history.push_back(history);
         }
         void removeLibrarian(){
             string userID;
@@ -562,6 +592,8 @@ class Librarian : public User {
             }
             library.librarians.erase(library.librarianMap[userID]);
             library.librarianMap.erase(userID);
+            History history("Deleted Librarian", library.librarianMap[userID].name, userID);
+            this->account.history.push_back(history);
         }
         // TODO: If time permits give choice to update book status as well.
         void updateBook(){
@@ -600,6 +632,8 @@ class Librarian : public User {
             }
             library.books.insert(book);
             library.bookMap[ISBN] = book;
+            History history("Updated Book", book.title, book.ISBN);
+            this->account.history.push_back(history);
         }
         void updateStudent(){
             string userID;
@@ -622,6 +656,8 @@ class Librarian : public User {
             }
             library.students.insert(student);
             library.studentMap[userID] = student;
+            History history("Updated Student", student.name, student.userID);
+            this->account.history.push_back(history);
         }
         void updateFaculty(){
             string userID;
@@ -644,6 +680,8 @@ class Librarian : public User {
             }
             library.faculties.insert(faculty);
             library.facultyMap[userID] = faculty;
+            History history("Updated Faculty", faculty.name, faculty.userID);
+            this->account.history.push_back(history);
         }
         void updateLibrarian(){
             string userID;
@@ -670,6 +708,8 @@ class Librarian : public User {
             }
             library.librarians.insert(librarian);
             library.librarianMap[userID] = librarian;
+            History history("Updated Librarian", librarian.name, librarian.userID);
+            this->account.history.push_back(history);
         }
         ~Librarian(){}
 };
@@ -699,6 +739,8 @@ class Faculty : public User {
             Book book = library.bookMap[ISBN];
             book.borrowBook();
             this->account.borrowedBooks.insert(book);
+            History history("Borrowed Book", book.title, book.ISBN);
+            this->account.history.push_back(history);
         }
         ~Faculty(){}
 };
