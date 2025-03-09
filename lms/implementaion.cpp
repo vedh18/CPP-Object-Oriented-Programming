@@ -1,20 +1,6 @@
 #include<bits/stdc++.h>
 #include "classes.h"
 using namespace std;
-
-void studentLoginPage(){
-    cout << "Welcome to the student login page" << endl;
-    cout << "Enter your student ID: ";
-    string studentID;
-    cin >> studentID;
-    if (library.studentMap.find(studentID) == library.studentMap.end()){
-        cout << "Student not found" << endl;
-        studentLoginPage();
-        return;
-    }
-    Student student = library.studentMap[studentID];
-    studentHomePage(student);
-}
 void studentHomePage(Student student){
     cout << "Welcome " << student.getName() << endl;
     cout << "What do you want to do?" << endl;
@@ -59,18 +45,18 @@ void studentHomePage(Student student){
             break;
     }
 }
-void facultyLoginPage(){
-    cout << "Welcome to the faculty login page" << endl;
-    cout << "Enter your faculty ID: ";
-    string facultyID;
-    cin >> facultyID;
-    if (library.facultyMap.find(facultyID) == library.facultyMap.end()){
-        cout << "Faculty not found" << endl;
-        facultyLoginPage();
+void studentLoginPage(){
+    cout << "Welcome to the student login page" << endl;
+    cout << "Enter your student ID: ";
+    string studentID;
+    cin >> studentID;
+    if (library.studentMap.find(studentID) == library.studentMap.end()){
+        cout << "Student not found" << endl;
+        studentLoginPage();
         return;
     }
-    Faculty faculty = library.facultyMap[facultyID];
-    facultyHomePage(faculty);
+    Student student = library.studentMap[studentID];
+    studentHomePage(student);
 }
 void facultyHomePage(Faculty& faculty){
     cout << "Welcome to the faculty home page" << endl;
@@ -109,18 +95,18 @@ void facultyHomePage(Faculty& faculty){
             break;
     }
 }
-void librarianLoginPage(){
-    cout << "Welcome to the librarian login page" << endl;
-    cout << "Enter your librarian ID: ";
-    string librarianID;
-    cin >> librarianID;
-    if (library.librarianMap.find(librarianID) == library.librarianMap.end()){
+void facultyLoginPage(){
+    cout << "Welcome to the faculty login page" << endl;
+    cout << "Enter your faculty ID: ";
+    string facultyID;
+    cin >> facultyID;
+    if (library.facultyMap.find(facultyID) == library.facultyMap.end()){
         cout << "Faculty not found" << endl;
-        librarianLoginPage();
+        facultyLoginPage();
         return;
     }
-    Librarian librarian = library.librarianMap[librarianID];
-    librarianHomePage(librarian);
+    Faculty faculty = library.facultyMap[facultyID];
+    facultyHomePage(faculty);
 }
 void librarianHomePage(Librarian librarian){
     cout << "Welcome to the librarian home page" << endl;
@@ -201,11 +187,24 @@ void librarianHomePage(Librarian librarian){
             return;
     }
 }
+void librarianLoginPage(){
+    cout << "Welcome to the librarian login page" << endl;
+    cout << "Enter your librarian ID: ";
+    string librarianID;
+    cin >> librarianID;
+    if (library.librarianMap.find(librarianID) == library.librarianMap.end()){
+        cout << "Librarian not found" << endl;
+        librarianLoginPage();
+        return;
+    }
+    Librarian librarian = library.librarianMap[librarianID];
+    librarianHomePage(librarian);
+}
 
 int main(){
     cout << "Hello welcome to the library management system" << endl;
     cout << "Please select your role: " << endl;
-    int x = printMenu({"Student", "Faculty", "Librarian"});
+    int x = printMenu({"Student", "Faculty", "Librarian", "Exit"});
     if (x == 1){
         studentLoginPage();
     }

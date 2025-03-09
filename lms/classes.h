@@ -57,7 +57,7 @@ class Book {
         string title;
         string author;
         string publisher;
-        int year;
+        string year;
     
         // Book status details
         // "Available", "Borrowed", "Reserved"
@@ -70,14 +70,14 @@ class Book {
     public:
         // Constructors
         Book();
-        Book(string ISBN, string title, string author, string publisher, int year, string status);
+        Book(string ISBN, string title, string author, string publisher, string year, string status);
     
         // Getter functions
         string getISBN() const;
         string getTitle() const;
         string getAuthor() const;
         string getPublisher() const;
-        int getYear() const;
+        string getYear() const;
         string getStatus() const;
         string getBorrowerID() const;
         time_t getBorrowedTime() const;
@@ -90,7 +90,7 @@ class Book {
         void updateTitle(const string &t);
         void updateAuthor(const string &a);
         void updatePublisher(const string &p);
-        void updateYear(int y);
+        void updateYear(string y);
         void updateStatus(const string &s);
         void updateBorrowerID(const string &id);
         void updateBorrowedTime(time_t t);
@@ -265,7 +265,7 @@ Library library;
 Book::Book() : borrowedTime(0), reserved(false), reservedTime(0) {}
 
 // Parameterized constructor
-Book::Book(string ISBN, string title, string author, string publisher, int year, string status)
+Book::Book(string ISBN, string title, string author, string publisher, string year, string status)
     : ISBN(ISBN), title(title), author(author), publisher(publisher), year(year),
       status(status), borrowedTime(0), reserved(false), reservedTime(0) {}
 
@@ -274,7 +274,7 @@ string Book::getISBN() const { return ISBN; }
 string Book::getTitle() const { return title; }
 string Book::getAuthor() const { return author; }
 string Book::getPublisher() const { return publisher; }
-int Book::getYear() const { return year; }
+string Book::getYear() const { return year; }
 string Book::getStatus() const { return status; }
 string Book::getBorrowerID() const { return borrowerID; }
 time_t Book::getBorrowedTime() const { return borrowedTime; }
@@ -287,7 +287,7 @@ void Book::updateISBN(const string &isbn) { ISBN = isbn; }
 void Book::updateTitle(const string &t) { title = t; }
 void Book::updateAuthor(const string &a) { author = a; }
 void Book::updatePublisher(const string &p) { publisher = p; }
-void Book::updateYear(int y) { year = y; }
+void Book::updateYear(string y) { year = y; }
 void Book::updateStatus(const string &s) { status = s; }
 void Book::updateBorrowerID(const string &id) { borrowerID = id; }
 void Book::updateBorrowedTime(time_t t) { borrowedTime = t; }
@@ -744,7 +744,7 @@ Librarian::Librarian(string name, string userID) : User(name, userID, "Librarian
 void Librarian::addBook() {
     cout << "Creating a new Book" << endl;
     string ISBN, title, author, publisher, status;
-    int year;
+    string year;
     cout << "Enter Book ISBN or enter 0 to go back: ";
     cin >> ISBN;
     if (ISBN == "0") {
@@ -969,7 +969,7 @@ void Librarian::updateBook() {
         }
         case 4: {
             cout << "Enter new year: ";
-            int newYear;
+            string newYear;
             cin >> newYear;
             book.updateYear(newYear);
             break;
@@ -1104,6 +1104,7 @@ Librarian::~Librarian() {
 void Library::readFromBooks(string file_path) {
     ifstream file(file_path);
     if (!file.is_open()) {
+        cout << file_path << endl;
         cerr << "Error opening file" << endl;
         return;
     }
@@ -1123,7 +1124,7 @@ void Library::readFromBooks(string file_path) {
         book.updateTitle(row[1]);
         book.updateAuthor(row[2]);
         book.updatePublisher(row[3]);
-        book.updateYear(stoi(row[4]));
+        book.updateYear(row[4]);
         book.updateStatus(row[5]);
         book.updateBorrowerID(row[6]);
         book.updateBorrowedTime(convertDateString(row[7]));
@@ -1136,102 +1137,200 @@ void Library::readFromBooks(string file_path) {
 }
 
 void Library::readFromStudents(string file_path) {
-    ifstream file(file_path);
+    std::ifstream file(file_path);
+    // std::cout << "YES" << std::endl;
+
     if (!file.is_open()) {
-        cerr << "Error opening file" << endl;
+        std::cerr << "Error opening file" << std::endl;
+        cout << "Please exit as the application wont work properly." << endl;
         return;
     }
-    string line;
+
+    std::string line;
     Student student;
-    while (getline(file, line)) {
+
+    while (std::getline(file, line)) {
+        // If the line is empty, we break out of the loop.
         if (line.empty()) {
+            // std::cout << "YES" << std::endl;
             break;
         }
-        vector<string> row;
-        string cell;
-        istringstream lineStream(line);
-        while (getline(lineStream, cell, ',')) {
+
+        // Split the line by commas into a vector.
+        std::vector<std::string> row;
+        std::string cell;
+        std::istringstream lineStream(line);
+        // std::cout << "YES1" << std::endl;
+
+        while (std::getline(lineStream, cell, ',')) {
             row.push_back(cell);
         }
-        // Expected row format:
-        // userID,Student Name,Book 1,Issued Date,Book 2,Issued Date,Book 3,Issued Date,Reserved Books (ID)
-        student.updateUserID(row[0]);
-        student.updateName(row[1]);
-        student.account.borrowedBooks.insert(bookMap[row[2]]);
-        student.account.borrowedBooks.insert(bookMap[row[4]]);
-        student.account.borrowedBooks.insert(bookMap[row[6]]);
-        for (string reservedBookID : split(row[8], ':')) {
-            student.account.reservedBooks.insert(bookMap[reservedBookID]);
+        // std::cout << "YES" << std::endl;
+
+        // Make sure we have at least two elements for userID and name.
+        if (row.size() > 0) {
+            student.updateUserID(row[0]);
         }
+        if (row.size() > 1) {
+            student.updateName(row[1]);
+        }
+
+        // std::cout << "YES1.2" << std::endl; 
+
+        // Insert Book 1 if row[2] exists and is not empty
+        if (row.size() > 2 && !row[2].empty()) {
+            student.account.borrowedBooks.insert(bookMap[row[2]]);
+        }
+        // Insert Book 2 if row[4] exists and is not empty
+        if (row.size() > 4 && !row[4].empty()) {
+            student.account.borrowedBooks.insert(bookMap[row[4]]);
+        }
+        // Insert Book 3 if row[6] exists and is not empty
+        if (row.size() > 6 && !row[6].empty()) {
+            student.account.borrowedBooks.insert(bookMap[row[6]]);
+        }
+
+        // std::cout << "YES2" << std::endl;
+
+        // Check for reserved books (row[8])
+        if (row.size() > 8 && !row[8].empty()) {
+            // std::cout << "YES" << std::endl;
+            // Assume 'split' is a helper function that splits by ':'
+            for (const std::string& reservedBookID : split(row[8], ':')) {
+                // Only insert if reservedBookID is not empty
+                if (!reservedBookID.empty()) {
+                    student.account.reservedBooks.insert(bookMap[reservedBookID]);
+                }
+            }
+        }
+
+        // Insert the student into the set and map
         students.insert(student);
         studentMap[student.getUserID()] = student;
     }
-    file.close();
-}
 
-void Library::readFromFaculties(string file_path) {
-    ifstream file(file_path);
-    if (!file.is_open()) {
-        cerr << "Error opening file" << endl;
-        return;
-    }
-    string line;
-    Faculty faculty;
-    while (getline(file, line)) {
-        if (line.empty()) {
-            break;
-        }
-        vector<string> row;
-        string cell;
-        istringstream lineStream(line);
-        while (getline(lineStream, cell, ',')) {
-            row.push_back(cell);
-        }
-        // Expected row format:
-        // userID,Name,Book 1 (ID),Book 1 Issue Date,Book 2 (ID),Book 2 Issue Date,
-        // Book 3 (ID),Book 3 Issue Date,Book 4 (ID),Book 4 Issue Date,Book 5 (ID),Book 5 Issue Date,Reserved Books(IDs)
-        faculty.updateUserID(row[0]);
-        faculty.updateName(row[1]);
-        faculty.account.borrowedBooks.insert(bookMap[row[2]]);
-        faculty.account.borrowedBooks.insert(bookMap[row[4]]);
-        faculty.account.borrowedBooks.insert(bookMap[row[6]]);
-        faculty.account.borrowedBooks.insert(bookMap[row[8]]);
-        faculty.account.borrowedBooks.insert(bookMap[row[10]]);
-        for (string reservedBookID : split(row[12], ':')) {
-            faculty.account.reservedBooks.insert(bookMap[reservedBookID]);
-        }
-        faculties.insert(faculty);
-        facultyMap[faculty.getUserID()] = faculty;
-    }
     file.close();
 }
 
 void Library::readFromLibrarians(string file_path) {
-    ifstream file(file_path);
+    std::ifstream file(file_path);
     if (!file.is_open()) {
-        cerr << "Error opening file" << endl;
+        std::cerr << "Error opening file: " << file_path << std::endl;
         return;
     }
-    string line;
-    Librarian librarian;
-    while (getline(file, line)) {
+    
+    std::string line;
+    while (std::getline(file, line)) {
+        // Skip empty lines instead of breaking, in case there are gaps in the file.
         if (line.empty()) {
-            break;
+            continue;
         }
-        vector<string> row;
-        string cell;
-        istringstream lineStream(line);
-        while (getline(lineStream, cell, ',')) {
+        
+        std::vector<std::string> row;
+        std::string cell;
+        std::istringstream lineStream(line);
+        while (std::getline(lineStream, cell, ',')) {
             row.push_back(cell);
         }
-        // Expected row format: userID,Name
+        
+        // Check if there are at least two columns: userID and Name.
+        if (row.size() < 2) {
+            std::cerr << "Insufficient data in line, skipping: " << line << std::endl;
+            continue;
+        }
+        
+        // Create a new Librarian object for each line.
+        Librarian librarian;
         librarian.updateUserID(row[0]);
         librarian.updateName(row[1]);
+        
         librarians.insert(librarian);
         librarianMap[librarian.getUserID()] = librarian;
     }
+    
     file.close();
 }
+
+
+void Library::readFromFaculties(string file_path) {
+    std::ifstream file(file_path);
+    if (!file.is_open()) {
+        std::cerr << "Error opening file" << std::endl;
+        return;
+    }
+
+    std::string line;
+    while (std::getline(file, line)) {
+        // Skip empty lines
+        if (line.empty()) {
+            break;
+        }
+
+        std::vector<std::string> row;
+        std::string cell;
+        std::istringstream lineStream(line);
+
+        // Split CSV line by commas
+        while (std::getline(lineStream, cell, ',')) {
+            row.push_back(cell);
+        }
+
+        // Create a fresh Faculty object for each line
+        Faculty faculty;
+
+        // Safely update userID (row[0]) if available
+        if (row.size() > 0 && !row[0].empty()) {
+            faculty.updateUserID(row[0]);
+        }
+
+        // Safely update Name (row[1]) if available
+        if (row.size() > 1 && !row[1].empty()) {
+            faculty.updateName(row[1]);
+        }
+
+        // Book 1 (ID) at row[2]
+        if (row.size() > 2 && !row[2].empty()) {
+            faculty.account.borrowedBooks.insert(bookMap[row[2]]);
+        }
+
+        // Book 2 (ID) at row[4]
+        if (row.size() > 4 && !row[4].empty()) {
+            faculty.account.borrowedBooks.insert(bookMap[row[4]]);
+        }
+
+        // Book 3 (ID) at row[6]
+        if (row.size() > 6 && !row[6].empty()) {
+            faculty.account.borrowedBooks.insert(bookMap[row[6]]);
+        }
+
+        // Book 4 (ID) at row[8]
+        if (row.size() > 8 && !row[8].empty()) {
+            faculty.account.borrowedBooks.insert(bookMap[row[8]]);
+        }
+
+        // Book 5 (ID) at row[10]
+        if (row.size() > 10 && !row[10].empty()) {
+            faculty.account.borrowedBooks.insert(bookMap[row[10]]);
+        }
+
+        // Reserved Books (IDs) at row[12]
+        if (row.size() > 12 && !row[12].empty()) {
+            // Assume 'split' is a helper function that splits a string by ':'
+            for (const std::string& reservedBookID : split(row[12], ':')) {
+                if (!reservedBookID.empty()) {
+                    faculty.account.reservedBooks.insert(bookMap[reservedBookID]);
+                }
+            }
+        }
+
+        // Insert into your data structures
+        faculties.insert(faculty);
+        facultyMap[faculty.getUserID()] = faculty;
+    }
+
+    file.close();
+}
+
 
 void Library::writeToBooks(string filename) {
     ofstream file(filename);
@@ -1331,10 +1430,10 @@ void Library::writeToLibrarians(string filepath) {
 }
 
 Library::Library() {
-    readFromBooks("files\\books.csv");
-    readFromStudents("files\\Users\\students.csv");
-    readFromFaculties("files\\Users\\faculty.csv");
-    readFromLibrarians("files\\Users\\librarians.csv");
+    readFromBooks("C:\\Users\\vedha\\Library-Management-System\\lms\\files\\books.csv");
+    readFromStudents("C:\\Users\\vedha\\Library-Management-System\\lms\\files\\students.csv");
+    readFromFaculties("C:\\Users\\vedha\\Library-Management-System\\lms\\files\\faculty.csv");
+    readFromLibrarians("C:\\Users\\vedha\\Library-Management-System\\lms\\files\\librarians.csv");
 }
 void Library::viewAllBooks(){
     for (auto book : books){
@@ -1395,8 +1494,8 @@ void Library::viewLibrarians() {
 }
 
 Library::~Library() {
-    writeToBooks("files\\books.csv");
-    writeToStudents("files\\Users\\students.csv");
-    writeToFaculties("files\\Users\\faculty.csv");
-    writeToLibrarians("files\\Users\\librarians.csv");
+    writeToBooks("C:\\Users\\vedha\\Library-Management-System\\lms\\files\\books.csv");
+    writeToStudents("C:\\Users\\vedha\\Library-Management-System\\lms\\files\\students.csv");
+    writeToFaculties("C:\\Users\\vedha\\Library-Management-System\\lms\\files\\faculty.csv");
+    writeToLibrarians("C:\\Users\\vedha\\Library-Management-System\\lms\\files\\librarians.csv");
 }
