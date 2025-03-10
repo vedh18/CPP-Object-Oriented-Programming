@@ -329,10 +329,10 @@ void Library::writeToLibrarians(string filepath) {
 }
 
 Library::Library() {
-    readFromBooks("C:\\Users\\vedha\\Library-Management-System\\lms\\files\\books.csv");
-    readFromStudents("C:\\Users\\vedha\\Library-Management-System\\lms\\files\\students.csv");
-    readFromFaculties("C:\\Users\\vedha\\Library-Management-System\\lms\\files\\faculty.csv");
-    readFromLibrarians("C:\\Users\\vedha\\Library-Management-System\\lms\\files\\librarians.csv");
+    readFromBooks("files\\books.csv");
+    readFromStudents("files\\students.csv");
+    readFromFaculties("files\\faculty.csv");
+    readFromLibrarians("files\\librarians.csv");
 }
 void Library::viewAllBooks(){
     for (auto book : books){
@@ -393,8 +393,8 @@ void Library::viewLibrarians() {
 }
 
 Library::~Library() {
-    writeToBooks("C:\\Users\\vedha\\Library-Management-System\\lms\\files\\books.csv");
-    writeToStudents("C:\\Users\\vedha\\Library-Management-System\\lms\\files\\students.csv");
-    writeToFaculties("C:\\Users\\vedha\\Library-Management-System\\lms\\files\\faculty.csv");
-    writeToLibrarians("C:\\Users\\vedha\\Library-Management-System\\lms\\files\\librarians.csv");
+    writeToBooks("files\\books.csv");
+    writeToStudents("files\\students.csv");
+    writeToFaculties("files\\faculty.csv");
+    writeToLibrarians("files\\librarians.csv");
 }
