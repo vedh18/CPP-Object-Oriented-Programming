@@ -1,4 +1,5 @@
 #include "book.h"
+#include "global.h"
 Book::Book() : borrowedTime(0), reserved(false), reservedTime(0) {}
 
 // Parameterized constructor

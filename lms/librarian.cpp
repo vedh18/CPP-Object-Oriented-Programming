@@ -1,5 +1,8 @@
 #include "librarian.h"
-
+#include "book.h"      // For Book class used in member functions
+#include "history.h"   // For History records in account
+#include "global.h"    // For access to the global Library object
+#include "misc_functions.h" // For printMenu function
 /*---------------------- Librarian Class Implementation ----------------------*/
 
 // Default constructor

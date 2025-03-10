@@ -4,7 +4,6 @@
 #include <iostream>
 #include <string>
 #include "account.h"
-#include "global.h"
 
 using namespace std;
 
@@ -32,5 +31,4 @@ class User {
         // Virtual destructor
         virtual ~User();
 };
-
 #endif

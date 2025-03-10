@@ -12,8 +12,8 @@ using namespace std;
 
 // Function declarations
 int printMenu(vector<string> menu);
-time_t convertDateString(const string &dateStr);
-vector<string> split(const string &s, char delimiter);
+time_t convertDateString(string dateStr);
+vector<string> split(string s, char delimiter);
 string timeToDateString(time_t t);
 
 #endif // MISC_FUNCTIONS_H

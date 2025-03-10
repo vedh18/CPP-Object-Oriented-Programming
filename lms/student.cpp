@@ -1,5 +1,5 @@
 #include "student.h"
-
+#include "global.h"    // To access the global Library object
 /*---------------------- Student Class Implementation ----------------------*/
 
 // Default constructor

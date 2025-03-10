@@ -1,4 +1,6 @@
 #include "account.h"
+#include "global.h"
+
 string Account::getUserID(){
     return this->userID;
 }

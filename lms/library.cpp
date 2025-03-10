@@ -1,10 +1,12 @@
 #include "library.h"
+#include "global.h"
+#include "misc_functions.h"  // Assuming `split()` and `convertDateString()` are here
 
 void Library::readFromBooks(string file_path) {
     ifstream file(file_path);
     if (!file.is_open()) {
-        cout << file_path << endl;
-        cerr << "Error opening file" << endl;
+        cout << "YES" << endl;
+        cerr << "Error opening file yes" << endl;
         return;
     }
     string line;
@@ -34,10 +36,8 @@ void Library::readFromBooks(string file_path) {
     }
     file.close();
 }
-
 void Library::readFromStudents(string file_path) {
     std::ifstream file(file_path);
-    // std::cout << "YES" << std::endl;
 
     if (!file.is_open()) {
         std::cerr << "Error opening file" << std::endl;
@@ -51,7 +51,6 @@ void Library::readFromStudents(string file_path) {
     while (std::getline(file, line)) {
         // If the line is empty, we break out of the loop.
         if (line.empty()) {
-            // std::cout << "YES" << std::endl;
             break;
         }
 
@@ -154,7 +153,8 @@ void Library::readFromLibrarians(string file_path) {
 void Library::readFromFaculties(string file_path) {
     std::ifstream file(file_path);
     if (!file.is_open()) {
-        std::cerr << "Error opening file" << std::endl;
+        cout << "YES" << endl;
+        std::cerr << "Error opening file: " << file_path << std::endl;
         return;
     }
 
@@ -274,7 +274,7 @@ void Library::writeToStudents(string filename) {
         i = 0;
         for (auto book : student.account.reservedBooks) {
             file << book.getISBN();
-            if (i < student.account.reservedBooks.size() - 1) {
+            if (i < (int)student.account.reservedBooks.size() - 1) {
                 file << ":";
             }
             i++;
@@ -305,7 +305,7 @@ void Library::writeToFaculties(string filepath) {
         i = 0;
         for (auto book : faculty.account.reservedBooks) {
             file << book.getISBN();
-            if (i < faculty.account.reservedBooks.size() - 1) {
+            if (i < (int)faculty.account.reservedBooks.size() - 1) {
                 file << ":";
             }
             i++;

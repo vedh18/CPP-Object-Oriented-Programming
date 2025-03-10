@@ -4,7 +4,7 @@
 #include <iostream>
 #include <string>
 #include "user.h"      // Base class declaration
-#include "global.h"    // To access the global Library object
+
 
 using namespace std;
 

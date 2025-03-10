@@ -1,4 +1,5 @@
 #include "faculty.h"
+#include "global.h"   // For access to the global Library object
 
 Faculty::Faculty() {}
 

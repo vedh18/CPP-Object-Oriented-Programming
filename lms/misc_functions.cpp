@@ -1,16 +1,16 @@
 #include "misc_functions.h"
 
-int printMenu(::vector<::string> menu){
-    for (int i = 0; i < menu.size(); i++){
-        ::cout << i+1 << ". " << menu[i] << ::endl;
+int printMenu(vector<string> menu){
+    for (int i = 0; i < (int)menu.size(); i++){
+        cout << i+1 << ". " << menu[i] << ::endl;
     }
-    ::cout << "Enter your choice: ";
+    cout << "Enter your choice: ";
     int x;
     ::cin >> x;
     return x;
 }
 
-time_t convertDateString(string &dateStr) {
+time_t convertDateString(string dateStr) {
     tm tm = {};
     istringstream ss(dateStr);
     ss >> get_time(&tm, "%d %b %Y %H:%M:%S");
@@ -20,7 +20,7 @@ time_t convertDateString(string &dateStr) {
     return mktime(&tm);
 }
 
-vector<string> split(string &s, char delimiter) {
+vector<string> split(string s, char delimiter) {
     vector<string> tokens;
     istringstream iss(s);
     string token;

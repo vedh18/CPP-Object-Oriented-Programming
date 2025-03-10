@@ -11,7 +11,7 @@ using namespace std;
 // 1 day = 86400 seconds
 // 1 minute = 60 seconds
 
-int timeUnit = 86400; // 1 day
+// int timeUnit = 86400; // 1 day
 class Book {
     private:
         // Generic details

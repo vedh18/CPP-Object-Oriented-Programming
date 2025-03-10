@@ -1,4 +1,6 @@
 #include "user.h"
+#include "global.h"
+
 User::User() {}
 
 // Parameterized constructor

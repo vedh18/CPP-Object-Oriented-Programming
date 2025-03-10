@@ -4,7 +4,6 @@
 #include <iostream>
 #include <string>
 #include "user.h"     // Base class User declaration
-#include "global.h"   // For access to the global Library object
 
 class Faculty : public User {
     public:
