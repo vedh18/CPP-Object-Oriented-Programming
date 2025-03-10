@@ -48,12 +48,21 @@ The LMS allows different user roles to interact with the library:
 
 1. Clone the repository to your local machine.
 2. Open the project in your preferred IDE (e.g., Visual Studio Code).
-3. In classes.h go to lines 1433-1436 and 1497-1500 and change the string to your local path of the csv files.
-4. Adjust the time unit on line 16 in classes.h to your preferred time unit.
-5. First to initialize the database run initialization.cpp
+3. In [classes.h](https://github.com/vedh18/CPP-Object-Oriented-Programming/blob/main/lms/classes.h) go to lines 1433-1436 and 1497-1500 and change the string to your local path of the csv files.
+4. Adjust the time unit on line 16 in [classes.h](https://github.com/vedh18/CPP-Object-Oriented-Programming/blob/main/lms/classes.h) to your preferred time unit.
+5. First to initialize the database run [initialization.cpp](https://github.com/vedh18/CPP-Object-Oriented-Programming/blob/main/lms/initialization.cpp)
 6. Then open terminal and run these two commands:
     g++ -std=c++11 lms\implementaion.cpp -o main.exe
     .\main.exe
 7. Follow the prompts to interact with the Library Management System.
+
+## Improvements in the future:
+- Implement User Authentication while logging in the users
+- Allow multiple copies of the same book(ISBN)
+- Privatize data structures
+- Make a verification function for the librarian to verify weather the book is actually returned or weather the fine is actually paid.
+- Seperate the classes.h into seperate books.h, books.cpp, students.h, studnts.cpp and so on.
+- Make the UI better.
+- Make a better ReadME with more emojis :)
 
 
