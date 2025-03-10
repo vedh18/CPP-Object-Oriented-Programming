@@ -174,3 +174,4 @@ This project implements a Library Management System (LMS) in C++ using Object-Or
 - Privatize data structures
 - Make a verification function for the librarian to verify weather the book is actually returned or weather the fine is actually paid.
 - Make the UI better.
+- Add comments in code
