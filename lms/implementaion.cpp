@@ -1,6 +1,23 @@
-#include<bits/stdc++.h>
-#include "classes.h"
+#include <iostream>
+#include <string>
+#include <vector>
+#include <set>
+#include <map>
+#include "global.h"     // Declares the global Library object 'library'
+#include "library.h"    // Definition of the Library class
+#include "book.h"       // Book class
+#include "student.h"    // Student class
+#include "faculty.h"    // Faculty class
+#include "librarian.h"  // Librarian class
+#include "user.h"       // Base User class
+#include "history.h"    // History class
+#include "account.h"    // Account class
+
+// If you have utility functions like printMenu, include their header as well
+#include "misc_functions.h"      // For functions like printMenu or split (if defined here)
+
 using namespace std;
+
 void studentHomePage(Student student){
     cout << "Welcome " << student.getName() << endl;
     cout << "What do you want to do?" << endl;

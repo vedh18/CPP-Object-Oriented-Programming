@@ -1,5 +1,14 @@
-#include <bits/stdc++.h>
-#include "classes.h"
+#include <iostream>
+#include <string>
+#include "global.h"      // For the global Library object 'library'
+#include "book.h"        // For Book
+#include "student.h"     // For Student
+#include "faculty.h"     // For Faculty
+#include "librarian.h"   // For Librarian
+#include "user.h"        // For User base class
+#include "history.h"     // For History records
+#include "account.h"     // For Account
+
 using namespace std;
 
 int main(){
